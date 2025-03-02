@@ -297,15 +297,21 @@
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-package com.spoofify;
+package com.spoof;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.TimerTask;
+
+import org.json.JSONObject;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -323,10 +329,15 @@ import javafx.scene.media.MediaPlayer;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+
 /**
  * "Spoofify" music player using JavaFX basics, adapted to use the Song class.
  */
+
 public class Spoofify extends Application {
+
+    private final SpotifyService spotifyService = new SpotifyService();
+
 
     // -- Day/Night mode colors --
     private static final String DAY_BACKGROUND  = "-fx-background-color: white;";
@@ -334,30 +345,30 @@ public class Spoofify extends Application {
     private static final String NIGHT_BACKGROUND = "-fx-background-color: #333333;";
     private static final String NIGHT_TEXT_COLOR = "-fx-text-fill: white;";
 
-    // List of songs using the Song class
-    private final List<Song> songs = Arrays.asList(
-        new Song(
-            "media/music/FEN.mp3",
-            "FE!N",
-            "Travis Scott ft Playboi Carti",
-            "UTOPIA",
-            "media/images/cover1.png"
-        ),
-        new Song(
-            "media/music/Doom.mp3",
-            "The Only Thing They Fear Is You",
-            "Mick Gordon",
-            "Doom Eternal OST",
-            "media/images/cover2.png"
-        ),
-        new Song(
-            "media/music/Oops.mp3",
-            "Oops!!!",
-            "Yung Gravy",
-            "Oops!!!",
-            "media/images/cover3.png"
-        )
-    );
+    // List of songs 
+    // private final List<Song> songs = Arrays.asList(
+    //     new Song(
+    //         "media/music/FEN.mp3",
+    //         "FE!N",
+    //         "Travis Scott ft Playboi Carti",
+    //         "UTOPIA",
+    //         "media/images/cover1.png"
+    //     ),
+    //     new Song(
+    //         "media/music/Doom.mp3",
+    //         "The Only Thing They Fear Is You",
+    //         "Mick Gordon",
+    //         "Doom Eternal OST",
+    //         "media/images/cover2.png"
+    //     ),
+    //     new Song(
+    //         "media/music/Oops.mp3",
+    //         "Oops!!!",
+    //         "Yung Gravy",
+    //         "Oops!!!",
+    //         "media/images/cover3.png"
+    //     )
+    // );
 
     // Keep track of which song is currently playing
     private int currentIndex = 0;
@@ -376,261 +387,449 @@ public class Spoofify extends Application {
     private ProgressBar playbackBar;
     private Slider volumeSlider;
 
+    // @Override
+    // public void start(Stage stage) {
+    //     stage.setTitle("Spoofify Player");
+
+    //     StackPane rootStack = new StackPane();
+
+    //     // Blurred background
+    //     blurredBackgroundView = new ImageView();
+    //     blurredBackgroundView.setFitWidth(800);  // Big enough to cover window
+    //     blurredBackgroundView.setPreserveRatio(true);
+    //     GaussianBlur blur = new GaussianBlur(20.0);
+    //     blurredBackgroundView.setEffect(blur);
+    //     rootStack.getChildren().add(blurredBackgroundView);
+
+    //     // Main UI layout in a BorderPane
+    //     BorderPane mainUI = new BorderPane();
+    //     rootStack.getChildren().add(mainUI);
+
+    //     // Top Bar: Day/Night Toggle
+    //     HBox topBar = new HBox();
+    //     topBar.setStyle("-fx-background-color: transparent;");
+    //     topBar.setAlignment(Pos.CENTER_RIGHT);
+
+    //     dayNightToggle = new ToggleButton("Night Mode");
+    //     dayNightToggle.setOnAction(e -> toggleDayNightMode());
+    //     topBar.getChildren().add(dayNightToggle);
+    //     mainUI.setTop(topBar);
+
+    //     // Center: Album Art, Song Title, Artist, Album
+    //     VBox centerBox = new VBox();
+    //     centerBox.setSpacing(10);
+    //     centerBox.setAlignment(Pos.CENTER);
+    //     centerBox.setStyle("-fx-background-color: rgba(255, 255, 255, 0.3);");
+
+    //     albumArtView = new ImageView();
+    //     albumArtView.setFitWidth(200);
+    //     albumArtView.setFitHeight(200);
+    //     albumArtView.setPreserveRatio(true);
+  
+    //     titleLabel = new Label("Song Title");
+    //     artistLabel = new Label("Artist Name");
+    //     albumLabel = new Label("Album Name");
+
+    //     String titleStyle  = "-fx-font-family: 'Poppins'; -fx-font-size: 30px; -fx-font-weight: bold;";
+    //     String artistStyle = "-fx-font-family: 'Poppins'; -fx-font-size: 22px;";
+    //     String albumStyle  = "-fx-font-family: 'Poppins'; -fx-font-size: 18px;";
+
+    //     titleLabel.setStyle(DAY_TEXT_COLOR + titleStyle);
+    //     artistLabel.setStyle(DAY_TEXT_COLOR + artistStyle);
+    //     albumLabel.setStyle(DAY_TEXT_COLOR + albumStyle);
+
+    //     centerBox.getChildren().addAll(albumArtView, titleLabel, artistLabel, albumLabel);
+    //     mainUI.setCenter(centerBox);
+
+    //     // Bottom Bar: Playback Controls, Progress, Volume
+    //     HBox bottomBar = new HBox();
+    //     bottomBar.setSpacing(10);
+    //     bottomBar.setStyle("-fx-background-color: transparent;");
+    //     bottomBar.setPadding(new javafx.geometry.Insets(10));
+    //     Button prevButton = new Button("Prev");
+    //     Button playButton = new Button("Play");
+    //     Button pauseButton = new Button("Pause");
+    //     Button nextButton = new Button("Next");
+    //     progressLabel = new Label("0:00 / 0:00");
+    //     progressLabel.setStyle(DAY_TEXT_COLOR + "-fx-font-family: 'Poppins'; -fx-font-size: 12px;");
+
+    //     volumeSlider = new Slider(0.0, 1.0, 0.5); // range 0–1, default 0.5
+    //     volumeSlider.setPrefWidth(100);
+
+    //     playbackBar = new ProgressBar(0.0);
+    //     playbackBar.setPrefWidth(150);
+    //     playbackBar.setStyle("-fx-accent: #ff0000;");
+
+    //     // Button Events
+    //     prevButton.setOnAction(e -> handlePrevious());
+    //     playButton.setOnAction(e -> handlePlay());
+    //     pauseButton.setOnAction(e -> handlePause());
+    //     nextButton.setOnAction(e -> handleNext());
+
+    //     bottomBar.getChildren().addAll(
+    //         prevButton, playButton, pauseButton, nextButton,
+    //         playbackBar, progressLabel,
+    //         new Label("Volume:"), volumeSlider
+    //     );
+    //     mainUI.setBottom(bottomBar);
+
+    //     Scene scene = new Scene(rootStack, 600, 500);
+    //     stage.setScene(scene);
+    //     stage.show();
+
+    //     // Load the first track
+    //     loadTrack(currentIndex);
+    // }
+
     @Override
     public void start(Stage stage) {
-        stage.setTitle("Spoofify Player");
+        stage.setTitle("Spoofify - Spotify Web API Demo");
 
-        StackPane rootStack = new StackPane();
+        // Main layout
+        VBox root = new VBox(15);
+        root.setPadding(new Insets(20));
+        root.setAlignment(Pos.CENTER);
 
-        // Blurred background
-        blurredBackgroundView = new ImageView();
-        blurredBackgroundView.setFitWidth(800);  // Big enough to cover window
-        blurredBackgroundView.setPreserveRatio(true);
-        GaussianBlur blur = new GaussianBlur(20.0);
-        blurredBackgroundView.setEffect(blur);
-        rootStack.getChildren().add(blurredBackgroundView);
+        // Top bar: login button
+        loginButton = new Button("Login with Spotify");
+        loginButton.setOnAction(e -> handleLogin());
+        root.getChildren().add(loginButton);
 
-        // Main UI layout in a BorderPane
-        BorderPane mainUI = new BorderPane();
-        rootStack.getChildren().add(mainUI);
+        // Center: track info + album cover
+        titleLabel = new Label("Track title");
+        artistLabel = new Label("Artist");
+        albumCoverView = new ImageView();
+        albumCoverView.setFitHeight(200);
+        albumCoverView.setFitWidth(200);
+        albumCoverView.setPreserveRatio(true);
 
-        // Top Bar: Day/Night Toggle
-        HBox topBar = new HBox();
-        topBar.setStyle("-fx-background-color: transparent;");
-        topBar.setAlignment(Pos.CENTER_RIGHT);
-
-        dayNightToggle = new ToggleButton("Night Mode");
-        dayNightToggle.setOnAction(e -> toggleDayNightMode());
-        topBar.getChildren().add(dayNightToggle);
-        mainUI.setTop(topBar);
-
-        // Center: Album Art, Song Title, Artist, Album
-        VBox centerBox = new VBox();
-        centerBox.setSpacing(10);
+        VBox centerBox = new VBox(10, albumCoverView, titleLabel, artistLabel);
         centerBox.setAlignment(Pos.CENTER);
-        centerBox.setStyle("-fx-background-color: rgba(255, 255, 255, 0.3);");
+        root.getChildren().add(centerBox);
 
-        albumArtView = new ImageView();
-        albumArtView.setFitWidth(200);
-        albumArtView.setFitHeight(200);
-        albumArtView.setPreserveRatio(true);
-  
-        titleLabel = new Label("Song Title");
-        artistLabel = new Label("Artist Name");
-        albumLabel = new Label("Album Name");
+        // Bottom: playback controls
+        HBox bottomBar = new HBox(10);
+        bottomBar.setAlignment(Pos.CENTER);
 
-        String titleStyle  = "-fx-font-family: 'Poppins'; -fx-font-size: 30px; -fx-font-weight: bold;";
-        String artistStyle = "-fx-font-family: 'Poppins'; -fx-font-size: 22px;";
-        String albumStyle  = "-fx-font-family: 'Poppins'; -fx-font-size: 18px;";
-
-        titleLabel.setStyle(DAY_TEXT_COLOR + titleStyle);
-        artistLabel.setStyle(DAY_TEXT_COLOR + artistStyle);
-        albumLabel.setStyle(DAY_TEXT_COLOR + albumStyle);
-
-        centerBox.getChildren().addAll(albumArtView, titleLabel, artistLabel, albumLabel);
-        mainUI.setCenter(centerBox);
-
-        // Bottom Bar: Playback Controls, Progress, Volume
-        HBox bottomBar = new HBox();
-        bottomBar.setSpacing(10);
-        bottomBar.setStyle("-fx-background-color: transparent;");
-        bottomBar.setPadding(new javafx.geometry.Insets(10));
-
-        Button prevButton = new Button("Prev");
-        Button playButton = new Button("Play");
-        Button pauseButton = new Button("Pause");
-        Button nextButton = new Button("Next");
-
-        progressLabel = new Label("0:00 / 0:00");
-        progressLabel.setStyle(DAY_TEXT_COLOR + "-fx-font-family: 'Poppins'; -fx-font-size: 12px;");
-
-        volumeSlider = new Slider(0.0, 1.0, 0.5); // range 0–1, default 0.5
-        volumeSlider.setPrefWidth(100);
-
-        playbackBar = new ProgressBar(0.0);
-        playbackBar.setPrefWidth(150);
-        playbackBar.setStyle("-fx-accent: #ff0000;");
-
-        // Button Events
+        prevButton = new Button("Prev");
         prevButton.setOnAction(e -> handlePrevious());
+
+        playButton = new Button("Play");
         playButton.setOnAction(e -> handlePlay());
+
+        pauseButton = new Button("Pause");
         pauseButton.setOnAction(e -> handlePause());
+
+        nextButton = new Button("Next");
         nextButton.setOnAction(e -> handleNext());
 
-        bottomBar.getChildren().addAll(
-            prevButton, playButton, pauseButton, nextButton,
-            playbackBar, progressLabel,
-            new Label("Volume:"), volumeSlider
-        );
-        mainUI.setBottom(bottomBar);
+        Label volLabel = new Label("Volume");
+        volumeSlider = new Slider(0, 100, 50); // Spotify volume range is 0–100
+        volumeSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            handleVolumeChange(newVal.intValue());
+        });
 
-        Scene scene = new Scene(rootStack, 600, 500);
+        bottomBar.getChildren().addAll(prevButton, playButton, pauseButton, nextButton, volLabel, volumeSlider);
+        root.getChildren().add(bottomBar);
+
+        // Scene + Stage
+        Scene scene = new Scene(root, 600, 450);
         stage.setScene(scene);
         stage.show();
 
-        // Load the first track
-        loadTrack(currentIndex);
+        // Periodically update playback info
+        startPlaybackPolling();
+    }
+
+
+    // /**
+    //  * Load a specific track by index, create media player, and update the UI.
+    //  */
+    // private void loadTrack(int index) {
+    //     // Dispose old player if needed
+    //     if (mediaPlayer != null) {
+    //         mediaPlayer.stop();
+    //         mediaPlayer.dispose();
+    //     }
+
+    //     // Ensure valid index
+    //     currentIndex = (index + songs.size()) % songs.size();
+    //     Song currentSong = songs.get(currentIndex);
+
+    //     File mp3File = new File(currentSong.getFilePath());
+    //     Media media = new Media(mp3File.toURI().toString());
+    //     System.out.println(mp3File.toURI().toString());
+    //     System.out.println(mp3File.toURI().toString());
+    //     System.out.println(mp3File.toURI().toString());
+    //     System.out.println(mp3File.toURI().toString());
+    //     System.out.println(mp3File.toURI().toString());
+    //     mediaPlayer = new MediaPlayer(media);
+
+    //     // Update UI with the new Song
+    //     titleLabel.setText(currentSong.getTitle());
+    //     artistLabel.setText(currentSong.getArtist());
+    //     albumLabel.setText(currentSong.getAlbum());
+
+    //     Image cover = new Image("file:" + currentSong.getCoverPath());
+    //     albumArtView.setImage(cover);
+    //     blurredBackgroundView.setImage(cover);
+
+    //     // Reset progress
+    //     playbackBar.setProgress(0.0);
+    //     progressLabel.setText("0:00 / 0:00");
+    //     playbackBar.setStyle(
+    //         "-fx-accent: red;" +
+    //         "-fx-control-inner-background: #cccccc;" + // background of the bar when empty
+    //         "-fx-background-color: #999999;"           // outer border area
+    //     );
+
+    //     // Media is ready
+    //     mediaPlayer.setOnReady(() -> {
+    //         Duration total = mediaPlayer.getMedia().getDuration();
+    //         String totalStr = formatTime(total);
+    //         progressLabel.setText("0:00 / " + totalStr);
+    //     });
+
+    //     // Update playback progress
+    //     mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
+    //         Duration total = mediaPlayer.getTotalDuration();
+    //         if (total != null && !total.isUnknown()) {
+    //             double current   = newTime.toSeconds();
+    //             double totalSecs = total.toSeconds();
+    //             double frac      = (totalSecs > 0) ? (current / totalSecs) : 0.0;
+    //             playbackBar.setProgress(frac);
+
+    //             String currentStr = formatTime(newTime);
+    //             String totalStr   = formatTime(total);
+    //             progressLabel.setText(currentStr + " / " + totalStr);
+    //         }
+    //     });
+
+    //     // Keep volume in sync with the slider
+    //     volumeSlider.valueProperty().addListener((ov, oldVal, newVal) -> {
+    //         if (mediaPlayer != null) {
+    //             mediaPlayer.setVolume(newVal.doubleValue());
+    //         }
+    //     });
+    // }
+
+    // /**
+    //  * Format a Duration as M:SS (e.g., 3:05).
+    //  */
+    // private String formatTime(Duration duration) {
+    //     if (duration == null || duration.isUnknown()) {
+    //         return "0:00";
+    //     }
+    //     int seconds = (int) duration.toSeconds();
+    //     int minutes = seconds / 60;
+    //     int secs = seconds % 60;
+    //     return String.format("%d:%02d", minutes, secs);
+    // }
+
+    // // -- Button Handlers --
+    // private void handlePrevious() {
+    //     loadTrack(currentIndex - 1);
+    //     mediaPlayer.play();
+    // }
+
+    // private void handlePlay() {
+    //     if (mediaPlayer != null) {
+    //         mediaPlayer.play();
+    //     }
+    // }
+
+    // private void handlePause() {
+    //     if (mediaPlayer != null) {
+    //         mediaPlayer.pause();
+    //     }
+    // }
+
+    // private void handleNext() {
+    //     loadTrack(currentIndex + 1);
+    //     mediaPlayer.play();
+    // }
+
+    // /**
+    //  * Toggle between Day and Night mode by updating the style.
+    //  */
+    // private void toggleDayNightMode() {
+    //     boolean nightMode = dayNightToggle.isSelected();
+    //     if (nightMode) {
+    //         dayNightToggle.setText("Day Mode");
+    //         setOverallTheme(NIGHT_BACKGROUND, NIGHT_TEXT_COLOR);
+    //     } else {
+    //         dayNightToggle.setText("Night Mode");
+    //         setOverallTheme(DAY_BACKGROUND, DAY_TEXT_COLOR);
+    //     }
+    // }
+
+    // /**
+    //  * Updates the background/text color for the entire UI.
+    //  */
+    // private void setOverallTheme(String backgroundStyle, String textStyle) {
+    //     StackPane rootStack = (StackPane) dayNightToggle.getScene().getRoot();
+    //     BorderPane mainUI = (BorderPane) rootStack.getChildren().get(1);
+
+    //     // Top
+    //     HBox topBar = (HBox) mainUI.getTop();
+    //     topBar.setStyle(backgroundStyle);
+    //     dayNightToggle.setStyle(textStyle);
+
+    //     // Center
+    //     VBox centerBox = (VBox) mainUI.getCenter();
+    //     centerBox.setStyle(backgroundStyle);
+    //     titleLabel.setStyle(textStyle + "-fx-font-family: 'Poppins'; -fx-font-size: 30px; -fx-font-weight: bold;");
+    //     artistLabel.setStyle(textStyle + "-fx-font-family: 'Poppins'; -fx-font-size: 22px;");
+    //     albumLabel.setStyle(textStyle + "-fx-font-family: 'Poppins'; -fx-font-size: 18px;");
+
+    //     // Bottom
+    //     HBox bottomBar = (HBox) mainUI.getBottom();
+    //     bottomBar.setStyle("-fx-background-color: white;");
+    //     playbackBar.setStyle(
+    //         "-fx-accent: #0073e6;" +
+    //         "-fx-control-inner-background: #e0e0e0;" +
+    //         "-fx-background-color: #999;"
+    //     );
+    //     volumeSlider.setStyle("-fx-control-inner-background: #e0e0e0;");
+
+    //     // Re-style the bottom buttons 
+    //     for (javafx.scene.Node node : bottomBar.getChildren()) {
+    //         if (node instanceof Button) {
+    //             node.setStyle(textStyle + "-fx-font-family: 'Poppins';");
+    //         }
+    //     }
+    // }
+/**
+     * Start a timer to periodically fetch what's currently playing.
+     * This keeps the UI in sync if you skip tracks or play/pause from another device.
+     */
+    private void startPlaybackPolling() {
+        Timer timer = new Timer(true);
+        TimerTask fetchTask = new TimerTask() {
+            @Override
+            public void run() {
+                if (spotifyService.isAuthorized()) {
+                    try {
+                        JSONObject playback = spotifyService.getCurrentPlayback();
+                        if (playback != null && playback.has("item")) {
+                            JSONObject track = playback.getJSONObject("item");
+                            String trackName = track.optString("name", "Unknown Title");
+                            JSONObject artistsArray = track.optJSONArray("artists").optJSONObject(0);
+                            String artistName = (artistsArray != null) ? artistsArray.optString("name") : "Unknown Artist";
+
+                            // Album cover
+                            JSONObject album = track.optJSONObject("album");
+                            String imageUrl = null;
+                            if (album != null && album.has("images")) {
+                                // typically images[0] is the largest
+                                imageUrl = album.getJSONArray("images").getJSONObject(0).getString("url");
+                            }
+
+                            // Update UI on JavaFX thread
+                            javafx.application.Platform.runLater(() -> {
+                                titleLabel.setText(trackName);
+                                artistLabel.setText(artistName);
+                                if (imageUrl != null) {
+                                    albumCoverView.setImage(new Image(imageUrl));
+                                }
+                            });
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        };
+        // schedule every 5 seconds
+        timer.schedule(fetchTask, 0, 5000);
     }
 
     /**
-     * Load a specific track by index, create media player, and update the UI.
+     * Initiates the Spotify OAuth flow.
      */
-    private void loadTrack(int index) {
-        // Dispose old player if needed
-        if (mediaPlayer != null) {
-            mediaPlayer.stop();
-            mediaPlayer.dispose();
+    private void handleLogin() {
+        try {
+            spotifyService.authenticate();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            showAlert("Error", "Failed to start Spotify login: " + ex.getMessage());
         }
-
-        // Ensure valid index
-        currentIndex = (index + songs.size()) % songs.size();
-        Song currentSong = songs.get(currentIndex);
-
-        File mp3File = new File(currentSong.getFilePath());
-        Media media = new Media(mp3File.toURI().toString());
-        System.out.println(mp3File.toURI().toString());
-        System.out.println(mp3File.toURI().toString());
-        System.out.println(mp3File.toURI().toString());
-        System.out.println(mp3File.toURI().toString());
-        System.out.println(mp3File.toURI().toString());
-        mediaPlayer = new MediaPlayer(media);
-
-        // Update UI with the new Song
-        titleLabel.setText(currentSong.getTitle());
-        artistLabel.setText(currentSong.getArtist());
-        albumLabel.setText(currentSong.getAlbum());
-
-        Image cover = new Image("file:" + currentSong.getCoverPath());
-        albumArtView.setImage(cover);
-        blurredBackgroundView.setImage(cover);
-
-        // Reset progress
-        playbackBar.setProgress(0.0);
-        progressLabel.setText("0:00 / 0:00");
-        playbackBar.setStyle(
-            "-fx-accent: red;" +
-            "-fx-control-inner-background: #cccccc;" + // background of the bar when empty
-            "-fx-background-color: #999999;"           // outer border area
-        );
-
-        // Media is ready
-        mediaPlayer.setOnReady(() -> {
-            Duration total = mediaPlayer.getMedia().getDuration();
-            String totalStr = formatTime(total);
-            progressLabel.setText("0:00 / " + totalStr);
-        });
-
-        // Update playback progress
-        mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
-            Duration total = mediaPlayer.getTotalDuration();
-            if (total != null && !total.isUnknown()) {
-                double current   = newTime.toSeconds();
-                double totalSecs = total.toSeconds();
-                double frac      = (totalSecs > 0) ? (current / totalSecs) : 0.0;
-                playbackBar.setProgress(frac);
-
-                String currentStr = formatTime(newTime);
-                String totalStr   = formatTime(total);
-                progressLabel.setText(currentStr + " / " + totalStr);
-            }
-        });
-
-        // Keep volume in sync with the slider
-        volumeSlider.valueProperty().addListener((ov, oldVal, newVal) -> {
-            if (mediaPlayer != null) {
-                mediaPlayer.setVolume(newVal.doubleValue());
-            }
-        });
-    }
-
-    /**
-     * Format a Duration as M:SS (e.g., 3:05).
-     */
-    private String formatTime(Duration duration) {
-        if (duration == null || duration.isUnknown()) {
-            return "0:00";
-        }
-        int seconds = (int) duration.toSeconds();
-        int minutes = seconds / 60;
-        int secs = seconds % 60;
-        return String.format("%d:%02d", minutes, secs);
-    }
-
-    // -- Button Handlers --
-    private void handlePrevious() {
-        loadTrack(currentIndex - 1);
-        mediaPlayer.play();
     }
 
     private void handlePlay() {
-        if (mediaPlayer != null) {
-            mediaPlayer.play();
+        if (!spotifyService.isAuthorized()) {
+            showAlert("Not Logged In", "Please log in first.");
+            return;
+        }
+        try {
+            spotifyService.play();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Playback Error", "Failed to play: " + e.getMessage());
         }
     }
 
     private void handlePause() {
-        if (mediaPlayer != null) {
-            mediaPlayer.pause();
+        if (!spotifyService.isAuthorized()) {
+            showAlert("Not Logged In", "Please log in first.");
+            return;
+        }
+        try {
+            spotifyService.pause();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Playback Error", "Failed to pause: " + e.getMessage());
         }
     }
 
     private void handleNext() {
-        loadTrack(currentIndex + 1);
-        mediaPlayer.play();
-    }
-
-    /**
-     * Toggle between Day and Night mode by updating the style.
-     */
-    private void toggleDayNightMode() {
-        boolean nightMode = dayNightToggle.isSelected();
-        if (nightMode) {
-            dayNightToggle.setText("Day Mode");
-            setOverallTheme(NIGHT_BACKGROUND, NIGHT_TEXT_COLOR);
-        } else {
-            dayNightToggle.setText("Night Mode");
-            setOverallTheme(DAY_BACKGROUND, DAY_TEXT_COLOR);
+        if (!spotifyService.isAuthorized()) {
+            showAlert("Not Logged In", "Please log in first.");
+            return;
+        }
+        try {
+            spotifyService.nextTrack();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Playback Error", "Failed to go next: " + e.getMessage());
         }
     }
 
-    /**
-     * Updates the background/text color for the entire UI.
-     */
-    private void setOverallTheme(String backgroundStyle, String textStyle) {
-        StackPane rootStack = (StackPane) dayNightToggle.getScene().getRoot();
-        BorderPane mainUI = (BorderPane) rootStack.getChildren().get(1);
-
-        // Top
-        HBox topBar = (HBox) mainUI.getTop();
-        topBar.setStyle(backgroundStyle);
-        dayNightToggle.setStyle(textStyle);
-
-        // Center
-        VBox centerBox = (VBox) mainUI.getCenter();
-        centerBox.setStyle(backgroundStyle);
-        titleLabel.setStyle(textStyle + "-fx-font-family: 'Poppins'; -fx-font-size: 30px; -fx-font-weight: bold;");
-        artistLabel.setStyle(textStyle + "-fx-font-family: 'Poppins'; -fx-font-size: 22px;");
-        albumLabel.setStyle(textStyle + "-fx-font-family: 'Poppins'; -fx-font-size: 18px;");
-
-        // Bottom
-        HBox bottomBar = (HBox) mainUI.getBottom();
-        bottomBar.setStyle("-fx-background-color: white;");
-        playbackBar.setStyle(
-            "-fx-accent: #0073e6;" +
-            "-fx-control-inner-background: #e0e0e0;" +
-            "-fx-background-color: #999;"
-        );
-        volumeSlider.setStyle("-fx-control-inner-background: #e0e0e0;");
-
-        // Re-style the bottom buttons 
-        for (javafx.scene.Node node : bottomBar.getChildren()) {
-            if (node instanceof Button) {
-                node.setStyle(textStyle + "-fx-font-family: 'Poppins';");
-            }
+    private void handlePrevious() {
+        if (!spotifyService.isAuthorized()) {
+            showAlert("Not Logged In", "Please log in first.");
+            return;
+        }
+        try {
+            spotifyService.previousTrack();
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Playback Error", "Failed to go previous: " + e.getMessage());
         }
     }
 
-    
+    private void handleVolumeChange(int volumePercent) {
+        if (!spotifyService.isAuthorized()) {
+            return;
+        }
+        try {
+            spotifyService.setVolume(volumePercent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void showAlert(String title, String message) {
+        javafx.application.Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
+
+
     @Override
     public void stop() {
 
