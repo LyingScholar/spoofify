@@ -26,7 +26,7 @@ public class PlaybackBar extends HBox {
 
     private final Button shuffleButton;
     private final Button prevButton;
-    private Button playPauseButton;
+    private final Button playPauseButton;
     private final Button nextButton;
     private final Button repeatButton;
 

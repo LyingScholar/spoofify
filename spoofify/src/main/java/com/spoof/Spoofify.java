@@ -168,13 +168,7 @@ public class Spoofify extends Application {
         lyricsArea.setEditable(false);
         lyricsArea.setStyle("-fx-font-family: 'Roboto'; -fx-font-size: 14;");
         rightPane.getChildren().add(lyricsArea);
-        Map<Integer, String> timedLyrics = getLyricsForTrack(currentTrackId);
-        // Suppose the track is at progressMs; convert to seconds
-        int currentSec = progressMs / 1000;
-        // e.g., highlight the line
-        String currentLine = timedLyrics.getOrDefault(currentSec, "");
-        lyricsArea.setText(buildLyricsText(timedLyrics, currentSec, currentLine));
-
+        
         // HBox for album + lyrics
         HBox centerContent = new HBox(20);
         centerContent.setPadding(new Insets(20));
@@ -427,6 +421,14 @@ public class Spoofify extends Application {
                             if (track.has("duration_ms")) {
                                 durationMs = track.getInt("duration_ms");
                             }
+
+                            Map<Integer, String> timedLyrics = getLyricsForTrack(currentTrackId);
+                            // if track is at progressMs; convert to seconds
+                            int currentSec = progressMs / 1000;
+                            // e.g., highlight the line
+                            String currentLine = timedLyrics.getOrDefault(currentSec, "");
+                            lyricsArea.setText(buildLyricsText(timedLyrics, currentSec, currentLine));
+
 
                             // Track name, artist, album
                             String trackName = track.optString("name", "Unknown Title");
