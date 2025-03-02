@@ -33,7 +33,6 @@ public class Spoofify extends Application {
     private final SpotifyService spotifyService = new SpotifyService();
     private PlaybackBar playbackBar;  
     private ImageView albumCoverView;
-    private Button playPauseButton;
     private TextArea lyricsArea;
     private String currentTrackId;
     private String currentAlbumId;
@@ -41,6 +40,7 @@ public class Spoofify extends Application {
     private boolean shuffleOn = false;         // Track local shuffle state
     private String repeatMode = "off";         // "off", "track", or "context"
     private ImageView blurredBackgroundView;
+    private Timer timer;
 
 
 
@@ -168,6 +168,12 @@ public class Spoofify extends Application {
         lyricsArea.setEditable(false);
         lyricsArea.setStyle("-fx-font-family: 'Roboto'; -fx-font-size: 14;");
         rightPane.getChildren().add(lyricsArea);
+        Map<Integer, String> timedLyrics = getLyricsForTrack(currentTrackId);
+        // Suppose the track is at progressMs; convert to seconds
+        int currentSec = progressMs / 1000;
+        // e.g., highlight the line
+        String currentLine = timedLyrics.getOrDefault(currentSec, "");
+        lyricsArea.setText(buildLyricsText(timedLyrics, currentSec, currentLine));
 
         // HBox for album + lyrics
         HBox centerContent = new HBox(20);
@@ -384,16 +390,19 @@ public class Spoofify extends Application {
     }
 
     private void updatePlayPauseButtonStyle(boolean playing) {
+        Button ppButton = playbackBar.getPlayPauseButton();
+
         // Swap out the icon from "play.png" to "pause.png"
         String imageName = playing ? "pause.png" : "play.png";
         Image img = new Image(getClass().getResource("/images/" + imageName).toExternalForm());
-        ((ImageView) playPauseButton.getGraphic()).setImage(img);
+
+        ((ImageView) ppButton.getGraphic()).setImage(img);
     }
 
 
     
     private void startPlaybackPolling() {
-        Timer timer = new Timer(true);
+        timer = new Timer(true);
         TimerTask fetchTask = new TimerTask() {
             @Override
             public void run() {
@@ -450,6 +459,7 @@ public class Spoofify extends Application {
 
                                 if (x) {
                                     albumCoverView.setImage(y);
+                                    blurredBackgroundView.setImage(y);
                                 }
                             });
                         }
@@ -549,6 +559,9 @@ public class Spoofify extends Application {
 
     @Override
     public void stop() {
+        if (timer != null) {
+            timer.cancel();
+        }
         // dispose if here.
     }
 
