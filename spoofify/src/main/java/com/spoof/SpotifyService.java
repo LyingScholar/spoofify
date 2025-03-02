@@ -229,7 +229,7 @@ public class SpotifyService {
 
     public String[] getLyricsFromTrack(String trackId) throws IOException, InterruptedException {
         // Point to your local server or deployed endpoint
-        String endpoint = "http://localhost:8000/?trackid=" + trackId + "&format=lrc";
+        String endpoint = "http://localhost:8080/?trackid=" + trackId + "&format=lrc";
     
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
