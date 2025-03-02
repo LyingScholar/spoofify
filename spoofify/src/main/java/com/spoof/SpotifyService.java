@@ -10,6 +10,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.sun.net.httpserver.HttpServer;
@@ -212,6 +213,8 @@ public class SpotifyService {
         if (responseBody == null) return null;
         return new JSONObject(responseBody);
     }
+
+
     
     public JSONObject getAlbumDetails(String albumId) throws IOException, InterruptedException {
         if (!isAuthorized()) {
@@ -221,6 +224,44 @@ public class SpotifyService {
         String responseBody = callSpotifyApi("GET", endpoint, null);
         if (responseBody == null) return null;
         return new JSONObject(responseBody);
+    }
+    
+
+    public String[] getLyricsFromTrack(String trackId) throws IOException, InterruptedException {
+        // Point to your local server or deployed endpoint
+        String endpoint = "http://localhost:8000/?trackid=" + trackId + "&format=lrc";
+    
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(endpoint))
+            .GET()
+            .build();
+    
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    
+        if (response.statusCode() != 200) {
+            throw new IOException("Lyrics API returned HTTP " + response.statusCode());
+        }
+    
+        JSONObject json = new JSONObject(response.body());
+        if (json.optBoolean("error", true)) {
+            String errMsg = json.optString("message", "Unknown error from lyrics API");
+            throw new IOException("Lyrics API error: " + errMsg);
+        }
+    
+        JSONArray linesArray = json.optJSONArray("lines");
+        if (linesArray == null || linesArray.isEmpty()) {
+            throw new IOException("No lyric lines found in JSON response.");
+        }
+    
+        String[] lyricLines = new String[linesArray.length()];
+        for (int i = 0; i < linesArray.length(); i++) {
+            JSONObject lineObj = linesArray.getJSONObject(i);
+            String words = lineObj.optString("words", "");
+            lyricLines[i] = words;
+        }
+    
+        return lyricLines;
     }
     
 

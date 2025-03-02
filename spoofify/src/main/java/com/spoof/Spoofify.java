@@ -1,13 +1,14 @@
 package com.spoof;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import org.json.JSONObject;
 
+import javafx.animation.Animation;
+import javafx.animation.RotateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -25,6 +26,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 /**
  * A Spotify via the Web API.
@@ -41,6 +43,7 @@ public class Spoofify extends Application {
     private String repeatMode = "off";         // "off", "track", or "context"
     private ImageView blurredBackgroundView;
     private Timer timer;
+    private RotateTransition rotateTransition;
 
 
 
@@ -48,16 +51,20 @@ public class Spoofify extends Application {
     public void start(Stage stage) {
         stage.setTitle("Spoofify - Spotify Web API Demo");
 
+        stage.setMinWidth(300);
+        stage.setMinHeight(200);
+
         BorderPane mainLayout = new BorderPane();
-        mainLayout.setPrefSize(900, 600);
+        mainLayout.setMinSize(300, 200);
+        // mainLayout.setPrefSize(900, 600);
         mainLayout.setPadding(new Insets(20));
         
         
         // Top Bar
-        HBox topBar = new HBox();
+        HBox topBar = new HBox(10);
         topBar.setPadding(new Insets(10));
         topBar.setAlignment(Pos.CENTER_LEFT);
-        topBar.setStyle("-fx-background-color: #1DB954;"); // Typical Spotify green
+        topBar.setStyle("-fx-background-color:rgb(27, 66, 223);"); // Typical Spotify green
         Label logoLabel = new Label("Spoofify");
         logoLabel.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
         topBar.getChildren().add(logoLabel);
@@ -111,7 +118,7 @@ public class Spoofify extends Application {
         VBox sidebar = new VBox(15);
         sidebar.setPadding(new Insets(20));
         sidebar.setAlignment(Pos.TOP_LEFT);
-        sidebar.setStyle("-fx-background-color: #121212;"); // Spotify-like dark
+        sidebar.setStyle("-fx-background-color:rgb(42, 143, 215);"); // Spotify-like dark
         Label homeLabel = new Label("Home");
         homeLabel.setStyle("-fx-text-fill: white;");
         Label searchLabel = new Label("Search");
@@ -150,9 +157,12 @@ public class Spoofify extends Application {
         // Blurred background
         blurredBackgroundView = new ImageView();
         blurredBackgroundView.setPreserveRatio(true);
-        blurredBackgroundView.setFitWidth(900); // adjust as needed
         GaussianBlur blurEffect = new GaussianBlur(25.0);
         blurredBackgroundView.setEffect(blurEffect);
+
+        blurredBackgroundView.fitWidthProperty().bind(centerStack.widthProperty());
+        blurredBackgroundView.fitHeightProperty().bind(centerStack.heightProperty());
+
 
         // Left: album cover
         albumCoverView = new ImageView();
@@ -170,10 +180,9 @@ public class Spoofify extends Application {
         rightPane.getChildren().add(lyricsArea);
         
         // HBox for album + lyrics
-        HBox centerContent = new HBox(20);
+        HBox centerContent = new HBox(20,albumCoverView, rightPane);
         centerContent.setPadding(new Insets(20));
         centerContent.setAlignment(Pos.CENTER);
-        centerContent.getChildren().addAll(albumCoverView, rightPane);
 
         // Add blurred background and content to the StackPane
         centerStack.getChildren().addAll(blurredBackgroundView, centerContent);
@@ -201,28 +210,31 @@ public class Spoofify extends Application {
 
         Scene scene = new Scene(mainLayout);
         handleLogin();
+        rotateTransition = new RotateTransition(Duration.minutes(1), blurredBackgroundView);
+        rotateTransition.setByAngle(360);
+        rotateTransition.setCycleCount(Animation.INDEFINITE);
         stage.setScene(scene);
         stage.show();
 
         startPlaybackPolling();
     }
 
-    private Button createImageButton(String imageName) {
-        URL url = getClass().getResource("/images/" + imageName);
-        if (url == null) {
-            throw new RuntimeException("Resource not found: " + imageName);
-        }
-        Image img = new Image(url.toExternalForm());
-        ImageView iv = new ImageView(img);
-        iv.setFitWidth(24);
-        iv.setFitHeight(24);
-        iv.setPreserveRatio(true);
+    // private Button createImageButton(String imageName) {
+    //     URL url = getClass().getResource("/images/" + imageName);
+    //     if (url == null) {
+    //         throw new RuntimeException("Resource not found: " + imageName);
+    //     }
+    //     Image img = new Image(url.toExternalForm());
+    //     ImageView iv = new ImageView(img);
+    //     iv.setFitWidth(24);
+    //     iv.setFitHeight(24);
+    //     iv.setPreserveRatio(true);
 
-        Button button = new Button();
-        button.setGraphic(iv);
-        button.setStyle("-fx-background-color: transparent;");
-        return button;
-    }
+    //     Button button = new Button();
+    //     button.setGraphic(iv);
+    //     button.setStyle("-fx-background-color: transparent;");
+    //     return button;
+    // }
 
 
         private String buildLyricsText(Map<Integer, String> timedLyrics, int currentSec, String currentLine) {
@@ -239,22 +251,22 @@ public class Spoofify extends Application {
         return sb.toString();
     }
 
-    /**
-     * Example method to get timed lyrics. 
-     * Real Spotify doesn't provide direct lyric data in the Web API.
-     * You'd need a 3rd-party or your own store of timed lyrics.
-     */
-    private Map<Integer, String> getLyricsForTrack(String trackId) {
-        // A stub example. In reality you might call a separate service or API
-        // that returns line-by-line timestamps in seconds -> lyric text
-        return Map.of(
-            0,  "Sample lyric line at 0s",
-            5,  "Sample lyric line at 5s",
-            10, "Sample lyric line at 10s",
-            15, "Sample lyric line at 15s",
-            20, "Sample lyric line at 20s..."
-        );
-    }
+    // /**
+    //  * Example method to get timed lyrics. 
+    //  * Real Spotify doesn't provide direct lyric data in the Web API.
+    //  * You'd need a 3rd-party or your own store of timed lyrics.
+    //  */
+    // private Map<Integer, String> getLyricsForTrack(String trackId) {
+    //     // A stub example. In reality you might call a separate service or API
+    //     // that returns line-by-line timestamps in seconds -> lyric text
+    //     return Map.of(
+    //         0,  "Sample lyric line at 0s",
+    //         5,  "Sample lyric line at 5s",
+    //         10, "Sample lyric line at 10s",
+    //         15, "Sample lyric line at 15s",
+    //         20, "Sample lyric line at 20s..."
+    //     );
+    // }
 
     private void handleLogin() {
             try {
@@ -398,11 +410,13 @@ public class Spoofify extends Application {
     private void startPlaybackPolling() {
         timer = new Timer(true);
         TimerTask fetchTask = new TimerTask() {
+
             @Override
             public void run() {
                 if (spotifyService.isAuthorized()) {
                     try {
                         JSONObject playback = spotifyService.getCurrentPlayback();
+                        
                         if (playback != null && playback.has("item")) {
                             JSONObject track = playback.getJSONObject("item");
                             // track ID and album ID
@@ -422,13 +436,22 @@ public class Spoofify extends Application {
                                 durationMs = track.getInt("duration_ms");
                             }
 
-                            Map<Integer, String> timedLyrics = getLyricsForTrack(currentTrackId);
+                            // Map<Integer, String> timedLyrics = null; 
+                            String[] linesFromSpotify = spotifyService.getLyricsFromTrack(currentTrackId); 
                             // if track is at progressMs; convert to seconds
-                            int currentSec = progressMs / 1000;
+                            // int currentSec = progressMs / 1000;
                             // e.g., highlight the line
-                            String currentLine = timedLyrics.getOrDefault(currentSec, "");
-                            lyricsArea.setText(buildLyricsText(timedLyrics, currentSec, currentLine));
+                            // String currentLine = timedLyrics.getOrDefault(currentSec, "");
+                            // lyricsArea.setText(buildLyricsText(timedLyrics, currentSec, currentLine));
 
+                            int totalLines = linesFromSpotify.length;
+                            if (durationMs > 0 && totalLines > 0) {
+                                int lineIndex = (int)(((double) progressMs / durationMs) * totalLines);
+                                if (lineIndex < 0) lineIndex = 0;
+                                if (lineIndex >= totalLines) lineIndex = totalLines - 1;
+
+                                lyricsArea.setText(linesFromSpotify[lineIndex]);
+                            }
 
                             // Track name, artist, album
                             String trackName = track.optString("name", "Unknown Title");
@@ -445,6 +468,17 @@ public class Spoofify extends Application {
 
                             final boolean x = Boolean.TRUE.equals(imageUrl != null);
                             final Image y = new Image(imageUrl);
+
+                            // int totalLines = linesFromSpotify.length;
+                            //     if (durationMs > 0 && totalLines > 0) {
+                            //         // approximate which line to show
+                            //         // e.g., lineIndex = (progressMs / durationMs) * totalLines
+                            //         int lineIndex = (int) (((double) progressMs / durationMs) * totalLines);
+                            //         if (lineIndex < 0) lineIndex = 0;
+                            //         if (lineIndex >= totalLines) lineIndex = totalLines - 1;
+
+                            //         lyricsArea.setText(linesFromSpotify[lineIndex]); 
+                            //     }
 
                             Platform.runLater(() -> {
                                 playbackBar.getTrackTitleLabel().setText(trackName);

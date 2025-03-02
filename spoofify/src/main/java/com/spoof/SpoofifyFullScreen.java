@@ -186,7 +186,7 @@ public class SpoofifyFullScreen extends Application {
 
                             // For progress
                             int progressMs = playback.optInt("progress_ms", 0);
-                            int durationMs = 0;
+                            int durationMs = track.optInt("duration_ms", 0);
                             if (track.has("duration_ms")) {
                                 durationMs = track.getInt("duration_ms");
                             }
@@ -210,7 +210,19 @@ public class SpoofifyFullScreen extends Application {
 
                             // For lyrics
                             // Example: fetch from a method that returns a map of time->lyric
-                            Map<Integer, String> timedLyrics = getLyricsForTrack(currentTrackId);
+
+                            String[] linesFromSpotify = spotifyService.getLyricsFromTrack(currentTrackId);
+
+                            if (durationMs > 0 && linesFromSpotify.length > 0) {
+                                int totalLines = linesFromSpotify.length;
+                                int lineIndex = (int) (((double) progressMs / durationMs) * totalLines);
+
+                                if (lineIndex < 0) lineIndex = 0;
+                                if (lineIndex >= totalLines) lineIndex = totalLines - 1;
+
+                                // Then display that line in lyricsArea
+                                lyricsArea.setText(linesFromSpotify[lineIndex]);
+                            }
 
                             // Update UI on JavaFX thread
                             Platform.runLater(() -> {
@@ -239,11 +251,11 @@ public class SpoofifyFullScreen extends Application {
                                     progressSlider.setValue(0);
                                 }
 
-                                // Lyrics update – highlight current line
-                                if (timedLyrics != null) {
-                                    String currentLine = timedLyrics.getOrDefault(progressMs / 1000, "");
-                                    lyricsArea.setText(buildLyricsText(timedLyrics, progressMs / 1000, currentLine));
-                                }
+                                // // Lyrics update – highlight current line
+                                // if (timedLyrics != null) {
+                                //     String currentLine = timedLyrics.getOrDefault(progressMs / 1000, "");
+                                //     lyricsArea.setText(buildLyricsText(timedLyrics, progressMs / 1000, currentLine));
+                                // }
                             });
                         }
                     } catch (Exception e) {
