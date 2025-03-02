@@ -1,6 +1,5 @@
 package com.spoof;
 
-import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -12,9 +11,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -214,6 +211,11 @@ public class Spoofify extends Application {
     private void handleRepeat() {
         // stub, call spotifyService to toggle repeat
     }
+
+
+
+
+    
     private void startPlaybackPolling() {
         Timer timer = new Timer(true);
         TimerTask fetchTask = new TimerTask() {
@@ -233,6 +235,8 @@ public class Spoofify extends Application {
                             JSONObject artists = track.optJSONArray("artists").optJSONObject(0);
                             String artistName = (artists != null) ? artists.optString("name") : "Unknown Artist";
     
+                            String albumName = (album != null) ? album.optString("name", "Unknown Album") : "Unknown Album";
+                            
                             String imageUrl = null;
                             if (album != null && album.has("images")) {
                                 imageUrl = album.getJSONArray("images").getJSONObject(0).getString("url");
@@ -242,8 +246,9 @@ public class Spoofify extends Application {
                             final Image y = new Image(imageUrl);
 
                             Platform.runLater(() -> {
-                                titleLabel.setText(trackName);
-                                artistLabel.setText(artistName);
+                                playbackBar.getTrackTitleLabel().setText(trackName);
+                                playbackBar.getArtistLabel().setText(artistName);
+                                playbackBar.getAlbumLabel().setText(albumName);
                                 if (x) {
                                     albumCoverView.setImage(y);
                                 }
@@ -258,88 +263,81 @@ public class Spoofify extends Application {
         timer.schedule(fetchTask, 0, 5000);
     }
 
+
     private void showTrackDetails() {
         if (currentTrackId == null) {
-            showAlert("No Track Selected", "There is no track to display.");
+            showAlert("No Track Selected", "No track ID available.");
             return;
         }
         try {
             JSONObject trackJson = spotifyService.getTrackDetails(currentTrackId);
             if (trackJson == null) {
-                showAlert("Error", "Could not retrieve track details.");
+                showAlert("Error", "No track details found.");
                 return;
             }
-            // Grab some fields
-            String name       = trackJson.optString("name", "N/A");
-            int durationMs    = trackJson.optInt("duration_ms", 0);
-            int popularity    = trackJson.optInt("popularity", 0);
-            JSONObject album  = trackJson.optJSONObject("album");
-            String albumName  = (album != null) ? album.optString("name", "N/A") : "N/A";
-            String releaseDate= (album != null) ? album.optString("release_date", "N/A") : "N/A";
-    
-            // Convert duration to M:SS
-            int seconds = durationMs / 1000;
-            String durationStr = String.format("%d:%02d", seconds/60, seconds%60);
-    
-            // Build a simple UI for the details
-            Label trackNameLabel     = new Label("Track: " + name);
-            Label albumNameLabel     = new Label("Album: " + albumName);
-            Label releaseDateLabel   = new Label("Released: " + releaseDate);
-            Label popularityLabel    = new Label("Popularity: " + popularity);
-            Label durationLabel      = new Label("Duration: " + durationStr);
-    
-            VBox detailBox = new VBox(10, trackNameLabel, albumNameLabel, releaseDateLabel, popularityLabel, durationLabel);
-            detailBox.setPadding(new Insets(15));
+            String name        = trackJson.optString("name", "N/A");
+            int durationMs     = trackJson.optInt("duration_ms", 0);
+            int popularity     = trackJson.optInt("popularity", 0);
+            JSONObject album   = trackJson.optJSONObject("album");
+            String albumName   = (album != null) ? album.optString("name", "N/A") : "N/A";
+            String releaseDate = (album != null) ? album.optString("release_date", "N/A") : "N/A";
+
+            int seconds        = durationMs / 1000;
+            String durationStr = String.format("%d:%02d", seconds / 60, seconds % 60);
+
+            Label trackNameLabel   = new Label("Track: " + name);
+            Label albumNameLabel   = new Label("Album: " + albumName);
+            Label releaseDateLabel = new Label("Released: " + releaseDate);
+            Label popLabel         = new Label("Popularity: " + popularity);
+            Label durationLabel    = new Label("Duration: " + durationStr);
+
+            VBox detailBox = new VBox(10, trackNameLabel, albumNameLabel, releaseDateLabel, popLabel, durationLabel);
+            detailBox.setPadding(new Insets(10));
             detailBox.setAlignment(Pos.CENTER_LEFT);
-    
+
             Stage detailStage = new Stage();
             detailStage.setTitle("Track Details");
             detailStage.setScene(new Scene(detailBox, 300, 200));
             detailStage.show();
-    
         } catch (Exception e) {
-            e.printStackTrace();
             showAlert("Error", "Failed to load track details: " + e.getMessage());
         }
     }
-    
+
     private void showAlbumDetails() {
         if (currentAlbumId == null) {
-            showAlert("No Album Selected", "There is no album to display.");
+            showAlert("No Album Selected", "No album ID available.");
             return;
         }
         try {
             JSONObject albumJson = spotifyService.getAlbumDetails(currentAlbumId);
             if (albumJson == null) {
-                showAlert("Error", "Could not retrieve album details.");
+                showAlert("Error", "No album details found.");
                 return;
             }
-            String albumName    = albumJson.optString("name", "N/A");
-            String releaseDate  = albumJson.optString("release_date", "N/A");
-            int totalTracks     = albumJson.optInt("total_tracks", 0);
-            String label        = albumJson.optString("label", "N/A");
-    
-            // Build a simple UI for the details
-            Label nameLabel         = new Label("Album: " + albumName);
-            Label releaseDateLabel  = new Label("Released: " + releaseDate);
-            Label tracksLabel       = new Label("Tracks: " + totalTracks);
-            Label recordLabel       = new Label("Label: " + label);
-    
+            String albumName   = albumJson.optString("name", "N/A");
+            String releaseDate = albumJson.optString("release_date", "N/A");
+            int totalTracks    = albumJson.optInt("total_tracks", 0);
+            String label       = albumJson.optString("label", "N/A");
+
+            Label nameLabel        = new Label("Album: " + albumName);
+            Label releaseDateLabel = new Label("Released: " + releaseDate);
+            Label tracksLabel      = new Label("Tracks: " + totalTracks);
+            Label recordLabel      = new Label("Label: " + label);
+
             VBox detailBox = new VBox(10, nameLabel, releaseDateLabel, tracksLabel, recordLabel);
-            detailBox.setPadding(new Insets(15));
+            detailBox.setPadding(new Insets(10));
             detailBox.setAlignment(Pos.CENTER_LEFT);
-    
+
             Stage detailStage = new Stage();
             detailStage.setTitle("Album Details");
             detailStage.setScene(new Scene(detailBox, 300, 200));
             detailStage.show();
-    
         } catch (Exception e) {
-            e.printStackTrace();
             showAlert("Error", "Failed to load album details: " + e.getMessage());
         }
     }
-    
+
     private void showAlert(String title, String message) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -352,7 +350,7 @@ public class Spoofify extends Application {
 
     @Override
     public void stop() {
-        // If you were using a local MediaPlayer for MP3s, dispose it here.
+        // dispose if here.
     }
 
     public static void main(String[] args) {

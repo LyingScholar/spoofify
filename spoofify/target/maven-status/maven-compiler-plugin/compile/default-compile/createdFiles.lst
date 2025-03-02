@@ -1,5 +1,6 @@
 com\spoof\SpotifyService.class
 com\spoof\Spoofify.class
 com\spoof\App.class
+com\spoof\PlaybackBar.class
 com\spoof\Spoofify$1.class
 com\spoof\Song.class
