@@ -29,6 +29,7 @@ public class Song {
     public String getTitle() {
         return title;
     }
+    
     public String getArtist() {
         return artist;
     }
