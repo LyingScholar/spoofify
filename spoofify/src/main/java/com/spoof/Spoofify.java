@@ -301,10 +301,7 @@ package com.spoofify;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-
-import com.gui.Song;
 
 import javafx.application.Application;
 import javafx.geometry.Pos;
@@ -625,7 +622,7 @@ public class Spoofify extends Application {
         );
         volumeSlider.setStyle("-fx-control-inner-background: #e0e0e0;");
 
-        // Re-style the bottom buttons
+        // Re-style the bottom buttons 
         for (javafx.scene.Node node : bottomBar.getChildren()) {
             if (node instanceof Button) {
                 node.setStyle(textStyle + "-fx-font-family: 'Poppins';");
@@ -633,16 +630,17 @@ public class Spoofify extends Application {
         }
     }
 
+    
     @Override
     public void stop() {
-        // Safely dispose of the media player when exiting
+
         if (mediaPlayer != null) {
             mediaPlayer.stop();
             mediaPlayer.dispose();
         }
     }
 
-    // Main entry point
+
     public static void main(String[] args) {
         launch(args);
     }
