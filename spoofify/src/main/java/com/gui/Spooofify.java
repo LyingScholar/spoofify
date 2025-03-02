@@ -22,7 +22,7 @@
 // /**
 //  * "Spotify-like" music player using JavaFX basics.
 //  */
-// public class SpotifyLikePlayer extends Application {
+// public class Spooofify extends Application {
 
 //     // -- Day/Night mode colors --
 //     //Maybe add more colors for themes
@@ -326,7 +326,7 @@ import javafx.util.Duration;
 /**
  * "Spotify-like" music player using JavaFX basics.
  */
-public class SpotifyLikePlayer extends Application {
+public class Spooofify extends Application {
 
     // -- Day/Night mode colors --
     //Maybe add more colors for themes
