@@ -1,5 +1,6 @@
 package com.spoof;
 
+import java.net.URL;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -143,7 +144,11 @@ public class SpoofifyFullScreen extends Application {
      * Helper to create a Button with an Image icon from resource.
      */
     private Button createImageButton(String imageName) {
-        Image img = new Image(getClass().getResource("/images/" + imageName).toExternalForm());
+        URL url = getClass().getResource("/images/" + imageName);
+        if (url == null) {
+            throw new RuntimeException("Resource not found: " + imageName);
+        }
+        Image img = new Image(url.toExternalForm());
         ImageView iv = new ImageView(img);
         iv.setFitWidth(24);
         iv.setFitHeight(24);
