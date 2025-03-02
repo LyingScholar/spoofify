@@ -187,6 +187,20 @@ public class SpotifyService {
         return new JSONObject(response);
     }
 
+    public void setShuffle(boolean shuffle) throws IOException, InterruptedException {
+        // PUT /v1/me/player/shuffle?state=true|false
+        String endpoint = "/me/player/shuffle?state=" + shuffle;
+        callSpotifyApi("PUT", endpoint, null);
+    }
+    
+    public void setRepeat(String mode) throws IOException, InterruptedException {
+        // mode can be "off", "track", or "context"
+        // PUT /v1/me/player/repeat?state={mode}
+        String endpoint = "/me/player/repeat?state=" + mode;
+        callSpotifyApi("PUT", endpoint, null);
+    }
+    
+
 
     public JSONObject getTrackDetails(String trackId) throws IOException, InterruptedException {
         if (!isAuthorized()) {

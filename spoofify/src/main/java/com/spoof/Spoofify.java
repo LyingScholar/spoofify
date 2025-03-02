@@ -30,6 +30,9 @@ public class Spoofify extends Application {
 
     private String currentTrackId;
     private String currentAlbumId;
+    private boolean shuffleOn = false;         // Track local shuffle state
+private String repeatMode = "off";         // "off", "track", or "context"
+
 
 
     @Override
@@ -127,8 +130,8 @@ public class Spoofify extends Application {
         playbackBar.getPauseButton().setOnAction(e -> handlePause());
         playbackBar.getNextButton().setOnAction(e -> handleNext());
         playbackBar.getPrevButton().setOnAction(e -> handlePrevious());
-        playbackBar.getShuffleButton().setOnAction(e -> handleShuffle());
-        playbackBar.getRepeatButton().setOnAction(e -> handleRepeat());
+        playbackBar.getShuffleButton().setOnAction(e -> handleShuffleToggle());
+        playbackBar.getRepeatButton().setOnAction(e -> handleRepeatToggle());
         // Volume
         playbackBar.getVolumeSlider().valueProperty().addListener((obs, oldV, newV) -> {
             handleVolumeChange(newV.intValue());
@@ -215,15 +218,67 @@ public class Spoofify extends Application {
         }
     }
 
-    private void handleShuffle() {
-        // stub, call spotifyService to toggle shuffle
+    private void handleShuffleToggle() {
+        if (!spotifyService.isAuthorized()) {
+            showAlert("Not Logged In", "Please log in first.");
+            return;
+        }
+        shuffleOn = !shuffleOn; // Toggle
+        try {
+            spotifyService.setShuffle(shuffleOn);
+            updateShuffleButtonStyle(shuffleOn);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Shuffle Error", e.getMessage());
+        }
+    }
+    
+
+    private void handleRepeatToggle() {
+        if (!spotifyService.isAuthorized()) {
+            showAlert("Not Logged In", "Please log in first.");
+            return;
+        }
+        // Simple cycle
+        switch (repeatMode) {
+            case "off":
+                repeatMode = "context"; // repeat entire playlist/album
+                break;
+            case "context":
+                repeatMode = "track";   // repeat current track
+                break;
+            default:
+                repeatMode = "off";
+                break;
+        }
+    
+        try {
+            spotifyService.setRepeat(repeatMode);
+            updateRepeatButtonStyle(repeatMode);
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Repeat Error", e.getMessage());
+        }
+    }
+    
+
+
+    private void updateShuffleButtonStyle(boolean on) {
+        if (on) {
+            playbackBar.getShuffleButton().setStyle("-fx-text-fill: #1db954;"); 
+        } else {
+            playbackBar.getShuffleButton().setStyle("-fx-text-fill: white;");
+        }
     }
 
-    private void handleRepeat() {
-        // stub, call spotifyService to toggle repeat
+    private void updateRepeatButtonStyle(String mode) {
+        if ("off".equals(mode)) {
+            playbackBar.getRepeatButton().setStyle("-fx-text-fill: white;");
+        } else {
+            // "track" or "context"
+            playbackBar.getRepeatButton().setStyle("-fx-text-fill: #1db954;");
+        }
     }
-
-
 
 
     
@@ -247,7 +302,8 @@ public class Spoofify extends Application {
                             String artistName = (artists != null) ? artists.optString("name") : "Unknown Artist";
     
                             String albumName = (album != null) ? album.optString("name", "Unknown Album") : "Unknown Album";
-                            
+                            boolean shuffleState = playback.optBoolean("shuffle_state", false);
+                            String repeatState   = playback.optString("repeat_state", "off");
                             String imageUrl = null;
                             if (album != null && album.has("images")) {
                                 imageUrl = album.getJSONArray("images").getJSONObject(0).getString("url");
@@ -260,6 +316,10 @@ public class Spoofify extends Application {
                                 playbackBar.getTrackTitleLabel().setText(trackName);
                                 playbackBar.getArtistLabel().setText(artistName);
                                 playbackBar.getAlbumLabel().setText(albumName);
+                                shuffleOn = shuffleState;
+                                repeatMode = repeatState;
+                                updateShuffleButtonStyle(shuffleOn);
+                                updateRepeatButtonStyle(repeatMode);
                                 if (x) {
                                     albumCoverView.setImage(y);
                                 }
