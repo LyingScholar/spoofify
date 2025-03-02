@@ -1,5 +1,6 @@
 package com.spoof;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 import java.util.Timer;
@@ -126,6 +127,7 @@ public class SpoofifyFullScreen extends Application {
         // Scene & Stage
         Scene scene = new Scene(root, 1200, 700);
         stage.setScene(scene);
+        handleLogin();
         stage.show();
 
         // Event handlers
@@ -290,6 +292,15 @@ public class SpoofifyFullScreen extends Application {
 
     // -------------------- PLAYBACK CONTROL HANDLERS ------------------------
 
+    private void handleLogin() {
+        try {
+            spotifyService.authenticate();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            showAlert("Error", "Failed to start Spotify login: " + ex.getMessage());
+        }
+    }
+    
     private void handleShuffle() {
         if (!spotifyService.isAuthorized()) {
             showAlert("Not Logged In", "Please log in first.");
