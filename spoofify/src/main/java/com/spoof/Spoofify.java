@@ -1,6 +1,8 @@
 package com.spoof;
 
 import java.io.IOException;
+import java.net.URL;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -12,11 +14,15 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -27,11 +33,14 @@ public class Spoofify extends Application {
     private final SpotifyService spotifyService = new SpotifyService();
     private PlaybackBar playbackBar;  
     private ImageView albumCoverView;
-
+    private Button playPauseButton;
+    private TextArea lyricsArea;
     private String currentTrackId;
     private String currentAlbumId;
+    private boolean isPlaying = false;
     private boolean shuffleOn = false;         // Track local shuffle state
-private String repeatMode = "off";         // "off", "track", or "context"
+    private String repeatMode = "off";         // "off", "track", or "context"
+    private ImageView blurredBackgroundView;
 
 
 
@@ -114,20 +123,69 @@ private String repeatMode = "off";         // "off", "track", or "context"
 
 
         // Center content (just an album cover for now)
+        // albumCoverView = new ImageView();
+        // albumCoverView.setFitHeight(300);
+        // albumCoverView.setFitWidth(300);
+        // albumCoverView.setPreserveRatio(true);
+
+
+        // // Right Pane for lyrics
+        // VBox rightPane = new VBox();
+        // rightPane.setAlignment(Pos.CENTER_LEFT);
+        // lyricsArea = new TextArea();
+        // lyricsArea.setPrefSize(400, 400);
+        // lyricsArea.setEditable(false);
+        // // Style it:
+        // lyricsArea.setStyle("-fx-font-family: 'Roboto'; -fx-font-size: 14;");
+        // rightPane.getChildren().add(lyricsArea);
+
+        // HBox centerBox = new HBox(albumCoverView, rightPane);
+        // centerBox.setAlignment(Pos.CENTER);
+        // mainLayout.setCenter(centerBox);
+
+        //StackPane for the center region
+        StackPane centerStack = new StackPane();
+        centerStack.setAlignment(Pos.CENTER);
+
+        // Blurred background
+        blurredBackgroundView = new ImageView();
+        blurredBackgroundView.setPreserveRatio(true);
+        blurredBackgroundView.setFitWidth(900); // adjust as needed
+        GaussianBlur blurEffect = new GaussianBlur(25.0);
+        blurredBackgroundView.setEffect(blurEffect);
+
+        // Left: album cover
         albumCoverView = new ImageView();
         albumCoverView.setFitHeight(300);
         albumCoverView.setFitWidth(300);
         albumCoverView.setPreserveRatio(true);
 
-        VBox centerBox = new VBox(albumCoverView);
-        centerBox.setAlignment(Pos.CENTER);
-        mainLayout.setCenter(centerBox);
+        // Right: lyrics area
+        VBox rightPane = new VBox();
+        rightPane.setAlignment(Pos.CENTER_LEFT);
+        lyricsArea = new TextArea();
+        lyricsArea.setPrefSize(400, 400);
+        lyricsArea.setEditable(false);
+        lyricsArea.setStyle("-fx-font-family: 'Roboto'; -fx-font-size: 14;");
+        rightPane.getChildren().add(lyricsArea);
+
+        // HBox for album + lyrics
+        HBox centerContent = new HBox(20);
+        centerContent.setPadding(new Insets(20));
+        centerContent.setAlignment(Pos.CENTER);
+        centerContent.getChildren().addAll(albumCoverView, rightPane);
+
+        // Add blurred background and content to the StackPane
+        centerStack.getChildren().addAll(blurredBackgroundView, centerContent);
+
+        // Finally, set the StackPane into the center of mainLayout
+        mainLayout.setCenter(centerStack);
+
 
         // Bottom Playback Bar
         playbackBar = new PlaybackBar();
         // Wire up Spotify actions
-        playbackBar.getPlayButton().setOnAction(e -> handlePlay());
-        playbackBar.getPauseButton().setOnAction(e -> handlePause());
+        playbackBar.getPlayPauseButton().setOnAction(e -> handlePlay());
         playbackBar.getNextButton().setOnAction(e -> handleNext());
         playbackBar.getPrevButton().setOnAction(e -> handlePrevious());
         playbackBar.getShuffleButton().setOnAction(e -> handleShuffleToggle());
@@ -149,6 +207,55 @@ private String repeatMode = "off";         // "off", "track", or "context"
         startPlaybackPolling();
     }
 
+    private Button createImageButton(String imageName) {
+        URL url = getClass().getResource("/images/" + imageName);
+        if (url == null) {
+            throw new RuntimeException("Resource not found: " + imageName);
+        }
+        Image img = new Image(url.toExternalForm());
+        ImageView iv = new ImageView(img);
+        iv.setFitWidth(24);
+        iv.setFitHeight(24);
+        iv.setPreserveRatio(true);
+
+        Button button = new Button();
+        button.setGraphic(iv);
+        button.setStyle("-fx-background-color: transparent;");
+        return button;
+    }
+
+
+        private String buildLyricsText(Map<Integer, String> timedLyrics, int currentSec, String currentLine) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<Integer, String> entry : timedLyrics.entrySet()) {
+            int second = entry.getKey();
+            String lyric = entry.getValue();
+            if (second == currentSec) {
+                sb.append(">> ").append(lyric).append(" <<\n");
+            } else {
+                sb.append(lyric).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Example method to get timed lyrics. 
+     * Real Spotify doesn't provide direct lyric data in the Web API.
+     * You'd need a 3rd-party or your own store of timed lyrics.
+     */
+    private Map<Integer, String> getLyricsForTrack(String trackId) {
+        // A stub example. In reality you might call a separate service or API
+        // that returns line-by-line timestamps in seconds -> lyric text
+        return Map.of(
+            0,  "Sample lyric line at 0s",
+            5,  "Sample lyric line at 5s",
+            10, "Sample lyric line at 10s",
+            15, "Sample lyric line at 15s",
+            20, "Sample lyric line at 20s..."
+        );
+    }
+
     private void handleLogin() {
             try {
                 spotifyService.authenticate();
@@ -161,27 +268,23 @@ private String repeatMode = "off";         // "off", "track", or "context"
 
     private void handlePlay() {
         if (!spotifyService.isAuthorized()) {
-            showAlert("Not Logged In", "Please log in first (in your OAuth flow).");
-            return;
-        }
-        try {
-            spotifyService.play();
-        } catch (Exception e) {
-            showAlert("Playback Error", e.getMessage());
-        }
-    }
-
-    private void handlePause() {
-        if (!spotifyService.isAuthorized()) {
             showAlert("Not Logged In", "Please log in first.");
             return;
         }
         try {
-            spotifyService.pause();
+            if (isPlaying) {
+                spotifyService.pause();
+            } else {
+                spotifyService.play();
+            }
+            isPlaying = !isPlaying;
+            updatePlayPauseButtonStyle(isPlaying);
         } catch (Exception e) {
-            showAlert("Playback Error", e.getMessage());
+            e.printStackTrace();
+            showAlert("Error", e.getMessage());
         }
     }
+
 
     private void handleNext() {
         if (!spotifyService.isAuthorized()) {
@@ -280,6 +383,13 @@ private String repeatMode = "off";         // "off", "track", or "context"
         }
     }
 
+    private void updatePlayPauseButtonStyle(boolean playing) {
+        // Swap out the icon from "play.png" to "pause.png"
+        String imageName = playing ? "pause.png" : "play.png";
+        Image img = new Image(getClass().getResource("/images/" + imageName).toExternalForm());
+        ((ImageView) playPauseButton.getGraphic()).setImage(img);
+    }
+
 
     
     private void startPlaybackPolling() {
@@ -297,13 +407,26 @@ private String repeatMode = "off";         // "off", "track", or "context"
                             JSONObject album = track.optJSONObject("album");
                             currentAlbumId = (album != null) ? album.optString("id", null) : null;
     
+                            // Shuffle/Repeat
+                            boolean newShuffleState = playback.optBoolean("shuffle_state", false);
+                            String newRepeatMode    = playback.optString("repeat_state", "off");
+                            boolean playing         = playback.optBoolean("is_playing", false);
+
+                            // For progress
+                            int progressMs = playback.optInt("progress_ms", 0);
+                            int durationMs = 0;
+                            if (track.has("duration_ms")) {
+                                durationMs = track.getInt("duration_ms");
+                            }
+
+                            // Track name, artist, album
                             String trackName = track.optString("name", "Unknown Title");
                             JSONObject artists = track.optJSONArray("artists").optJSONObject(0);
                             String artistName = (artists != null) ? artists.optString("name") : "Unknown Artist";
     
                             String albumName = (album != null) ? album.optString("name", "Unknown Album") : "Unknown Album";
-                            boolean shuffleState = playback.optBoolean("shuffle_state", false);
-                            String repeatState   = playback.optString("repeat_state", "off");
+                            
+                            
                             String imageUrl = null;
                             if (album != null && album.has("images")) {
                                 imageUrl = album.getJSONArray("images").getJSONObject(0).getString("url");
@@ -316,10 +439,15 @@ private String repeatMode = "off";         // "off", "track", or "context"
                                 playbackBar.getTrackTitleLabel().setText(trackName);
                                 playbackBar.getArtistLabel().setText(artistName);
                                 playbackBar.getAlbumLabel().setText(albumName);
-                                shuffleOn = shuffleState;
-                                repeatMode = repeatState;
+                                
+                                // Shuffle/Repeat states
+                                shuffleOn = newShuffleState;
+                                repeatMode = newRepeatMode;
+                                isPlaying = playing;
                                 updateShuffleButtonStyle(shuffleOn);
                                 updateRepeatButtonStyle(repeatMode);
+                                updatePlayPauseButtonStyle(isPlaying);
+
                                 if (x) {
                                     albumCoverView.setImage(y);
                                 }

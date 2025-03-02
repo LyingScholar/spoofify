@@ -1,10 +1,14 @@
 package com.spoof;
 
+import java.net.URL;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -22,8 +26,7 @@ public class PlaybackBar extends HBox {
 
     private final Button shuffleButton;
     private final Button prevButton;
-    private final Button playButton;
-    private final Button pauseButton;
+    private Button playPauseButton;
     private final Button nextButton;
     private final Button repeatButton;
 
@@ -61,15 +64,14 @@ public class PlaybackBar extends HBox {
         HBox controlButtons = new HBox(10);
         controlButtons.setAlignment(Pos.CENTER);
 
-        shuffleButton = new Button("Shuffle");
-        prevButton = new Button("Prev");
-        playButton = new Button("Play");
-        pauseButton = new Button("Pause");
-        nextButton = new Button("Next");
-        repeatButton = new Button("Repeat");
+        shuffleButton = createImageButton("shuffle.png");
+        prevButton    = createImageButton("prev.png");
+        playPauseButton = createImageButton("play.png");
+        nextButton    = createImageButton("next.png");
+        repeatButton  = createImageButton("repeat.png");
 
 
-        controlButtons.getChildren().addAll(shuffleButton, prevButton, playButton, pauseButton, nextButton, repeatButton);
+        controlButtons.getChildren().addAll(shuffleButton, prevButton, playPauseButton, nextButton, repeatButton);
 
         HBox progressBox = new HBox(5);
         progressBox.setAlignment(Pos.CENTER);
@@ -104,14 +106,30 @@ public class PlaybackBar extends HBox {
         getChildren().addAll(nowPlayingBox, spacerLeft, controlsBox, spacerRight, volumeBox);
     }
 
+        private Button createImageButton(String imageName) {
+        URL url = getClass().getResource("/images/" + imageName);
+        if (url == null) {
+            throw new RuntimeException("Resource not found: " + imageName);
+        }
+        Image img = new Image(url.toExternalForm());
+        ImageView iv = new ImageView(img);
+        iv.setFitWidth(24);
+        iv.setFitHeight(24);
+        iv.setPreserveRatio(true);
+
+        Button button = new Button();
+        button.setGraphic(iv);
+        button.setStyle("-fx-background-color: transparent;");
+        return button;
+    }
+
     public Label getTrackTitleLabel() { return trackTitleLabel; }
     public Label getArtistLabel()     { return artistLabel; }
     public Label getAlbumLabel()      { return albumLabel; }
 
     public Button getShuffleButton()  { return shuffleButton; }
     public Button getPrevButton()     { return prevButton; }
-    public Button getPlayButton()     { return playButton; }
-    public Button getPauseButton()    { return pauseButton; }
+    public Button getPlayPauseButton()     { return playPauseButton; }
     public Button getNextButton()     { return nextButton; }
     public Button getRepeatButton()   { return repeatButton; }
 
