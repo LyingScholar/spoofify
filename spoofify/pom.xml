@@ -6,8 +6,8 @@
 
   <modelVersion>4.0.0</modelVersion>
   
-  <groupId>com.gui</groupId>
-  <artifactId>unit4</artifactId>
+  <groupId>com.spoofify</groupId>
+  <artifactId>spoofify</artifactId>
   <version>1.5</version>
 
   <properties>
@@ -58,7 +58,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
-          <mainClass>com.gui.SpotifyLikePlayer</mainClass>
+          <mainClass>com.spoofify.Spoofify</mainClass>
           <arguments>
             <!-- If you have a local JavaFX SDK unzipped -->
             <argument>--module-path</argument>

@@ -34,9 +34,9 @@
 
 //     // Array of songs (file paths) -- be sure these exist on your machine!
 //     private final String[] songFiles = {
-//         "src/main/java/com/gui/media/music/FEN.mp3",
-//         "src/main/java/com/gui/media/music/Doom.mp3",
-//         "src/main/java/com/gui/media/music/Oops.mp3"
+//         "src/main/java/com/spoofifiy/media/music/FEN.mp3",
+//         "src/main/java/com/spoofifiy/media/music/Doom.mp3",
+//         "src/main/java/com/spoofifiy/media/music/Oops.mp3"
 //     };
 
 //     // Parallel arrays for song info (could also make a small Song class)
@@ -58,9 +58,9 @@
 //     };
 
 //     private final String[] albumCovers = {
-//         "src/main/java/com/gui/media/images/cover1.png",
-//         "src/main/java/com/gui/media/images/cover2.png",
-//         "src/main/java/com/gui/media/images/cover3.png"
+//         "src/main/java/com/spoofifiy/media/images/cover1.png",
+//         "src/main/java/com/spoofifiy/media/images/cover2.png",
+//         "src/main/java/com/spoofifiy/media/images/cover3.png"
 //     };
 
 //     // Keep track of which song is currently playing
@@ -301,7 +301,10 @@ package com.spoofify;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+
+import com.gui.Song;
 
 import javafx.application.Application;
 import javafx.geometry.Pos;
@@ -337,25 +340,25 @@ public class Spoofify extends Application {
     // List of songs using the Song class
     private final List<Song> songs = Arrays.asList(
         new Song(
-            "src/main/java/com/gui/media/music/FEN.mp3",
+            "media/music/FEN.mp3",
             "FE!N",
             "Travis Scott ft Playboi Carti",
             "UTOPIA",
-            "src/main/java/com/gui/media/images/cover1.png"
+            "media/images/cover1.png"
         ),
         new Song(
-            "src/main/java/com/gui/media/music/Doom.mp3",
+            "media/music/Doom.mp3",
             "The Only Thing They Fear Is You",
             "Mick Gordon",
             "Doom Eternal OST",
-            "src/main/java/com/gui/media/images/cover2.png"
+            "media/images/cover2.png"
         ),
         new Song(
-            "src/main/java/com/gui/media/music/Oops.mp3",
+            "media/music/Oops.mp3",
             "Oops!!!",
             "Yung Gravy",
             "Oops!!!",
-            "src/main/java/com/gui/media/images/cover3.png"
+            "media/images/cover3.png"
         )
     );
 
@@ -414,7 +417,7 @@ public class Spoofify extends Application {
         albumArtView.setFitWidth(200);
         albumArtView.setFitHeight(200);
         albumArtView.setPreserveRatio(true);
-
+  
         titleLabel = new Label("Song Title");
         artistLabel = new Label("Artist Name");
         albumLabel = new Label("Album Name");
@@ -488,6 +491,11 @@ public class Spoofify extends Application {
 
         File mp3File = new File(currentSong.getFilePath());
         Media media = new Media(mp3File.toURI().toString());
+        System.out.println(mp3File.toURI().toString());
+        System.out.println(mp3File.toURI().toString());
+        System.out.println(mp3File.toURI().toString());
+        System.out.println(mp3File.toURI().toString());
+        System.out.println(mp3File.toURI().toString());
         mediaPlayer = new MediaPlayer(media);
 
         // Update UI with the new Song

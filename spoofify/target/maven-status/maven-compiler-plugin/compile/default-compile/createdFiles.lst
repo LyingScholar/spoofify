@@ -1,3 +1,3 @@
-com\gui\Song.class
-com\gui\App.class
-com\gui\Spoofify.class
+com\spoofify\App.class
+com\spoofify\Spoofify.class
+com\spoofify\Song.class
