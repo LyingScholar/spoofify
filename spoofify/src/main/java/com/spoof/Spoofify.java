@@ -87,6 +87,11 @@ public class Spoofify extends Application {
             handleVolumeChange(newVal.intValue())
         );
 
+        titleLabel = new Label("Title");
+        titleLabel.setOnMouseClicked(e -> showTrackDetails());
+        artistLabel = new Label("Artist");
+        artistLabel.setOnMouseClicked(e -> showAlbumDetails());
+
         bottomBar.getChildren().addAll(prevButton, playButton, pauseButton, nextButton, volLabel, volumeSlider);
         root.getChildren().add(bottomBar);
 
@@ -169,6 +174,9 @@ public class Spoofify extends Application {
         }
     }
 
+    private String currentTrackId;
+    private String currentAlbumId;
+
     private void startPlaybackPolling() {
         Timer timer = new Timer(true);
         TimerTask fetchTask = new TimerTask() {
@@ -179,11 +187,15 @@ public class Spoofify extends Application {
                         JSONObject playback = spotifyService.getCurrentPlayback();
                         if (playback != null && playback.has("item")) {
                             JSONObject track = playback.getJSONObject("item");
+                            // track ID and album ID
+                            currentTrackId = track.optString("id", null);
+                            JSONObject album = track.optJSONObject("album");
+                            currentAlbumId = (album != null) ? album.optString("id", null) : null;
+    
                             String trackName = track.optString("name", "Unknown Title");
                             JSONObject artists = track.optJSONArray("artists").optJSONObject(0);
                             String artistName = (artists != null) ? artists.optString("name") : "Unknown Artist";
-
-                            JSONObject album = track.optJSONObject("album");
+    
                             String imageUrl = null;
                             if (album != null && album.has("images")) {
                                 imageUrl = album.getJSONArray("images").getJSONObject(0).getString("url");
@@ -209,6 +221,88 @@ public class Spoofify extends Application {
         timer.schedule(fetchTask, 0, 5000);
     }
 
+    private void showTrackDetails() {
+        if (currentTrackId == null) {
+            showAlert("No Track Selected", "There is no track to display.");
+            return;
+        }
+        try {
+            JSONObject trackJson = spotifyService.getTrackDetails(currentTrackId);
+            if (trackJson == null) {
+                showAlert("Error", "Could not retrieve track details.");
+                return;
+            }
+            // Grab some fields
+            String name       = trackJson.optString("name", "N/A");
+            int durationMs    = trackJson.optInt("duration_ms", 0);
+            int popularity    = trackJson.optInt("popularity", 0);
+            JSONObject album  = trackJson.optJSONObject("album");
+            String albumName  = (album != null) ? album.optString("name", "N/A") : "N/A";
+            String releaseDate= (album != null) ? album.optString("release_date", "N/A") : "N/A";
+    
+            // Convert duration to M:SS
+            int seconds = durationMs / 1000;
+            String durationStr = String.format("%d:%02d", seconds/60, seconds%60);
+    
+            // Build a simple UI for the details
+            Label trackNameLabel     = new Label("Track: " + name);
+            Label albumNameLabel     = new Label("Album: " + albumName);
+            Label releaseDateLabel   = new Label("Released: " + releaseDate);
+            Label popularityLabel    = new Label("Popularity: " + popularity);
+            Label durationLabel      = new Label("Duration: " + durationStr);
+    
+            VBox detailBox = new VBox(10, trackNameLabel, albumNameLabel, releaseDateLabel, popularityLabel, durationLabel);
+            detailBox.setPadding(new Insets(15));
+            detailBox.setAlignment(Pos.CENTER_LEFT);
+    
+            Stage detailStage = new Stage();
+            detailStage.setTitle("Track Details");
+            detailStage.setScene(new Scene(detailBox, 300, 200));
+            detailStage.show();
+    
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Error", "Failed to load track details: " + e.getMessage());
+        }
+    }
+    
+    private void showAlbumDetails() {
+        if (currentAlbumId == null) {
+            showAlert("No Album Selected", "There is no album to display.");
+            return;
+        }
+        try {
+            JSONObject albumJson = spotifyService.getAlbumDetails(currentAlbumId);
+            if (albumJson == null) {
+                showAlert("Error", "Could not retrieve album details.");
+                return;
+            }
+            String albumName    = albumJson.optString("name", "N/A");
+            String releaseDate  = albumJson.optString("release_date", "N/A");
+            int totalTracks     = albumJson.optInt("total_tracks", 0);
+            String label        = albumJson.optString("label", "N/A");
+    
+            // Build a simple UI for the details
+            Label nameLabel         = new Label("Album: " + albumName);
+            Label releaseDateLabel  = new Label("Released: " + releaseDate);
+            Label tracksLabel       = new Label("Tracks: " + totalTracks);
+            Label recordLabel       = new Label("Label: " + label);
+    
+            VBox detailBox = new VBox(10, nameLabel, releaseDateLabel, tracksLabel, recordLabel);
+            detailBox.setPadding(new Insets(15));
+            detailBox.setAlignment(Pos.CENTER_LEFT);
+    
+            Stage detailStage = new Stage();
+            detailStage.setTitle("Album Details");
+            detailStage.setScene(new Scene(detailBox, 300, 200));
+            detailStage.show();
+    
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Error", "Failed to load album details: " + e.getMessage());
+        }
+    }
+    
     private void showAlert(String title, String message) {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);

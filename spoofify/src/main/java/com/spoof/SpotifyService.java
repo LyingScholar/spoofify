@@ -156,6 +156,29 @@ public class SpotifyService {
         return new JSONObject(response);
     }
 
+    
+    public JSONObject getTrackDetails(String trackId) throws IOException, InterruptedException {
+        if (!isAuthorized()) {
+            throw new IllegalStateException("Not authorized yet!");
+        }
+        // GET /v1/tracks/{id}
+        String endpoint = "/tracks/" + trackId;
+        String responseBody = callSpotifyApi("GET", endpoint, null);
+        if (responseBody == null) return null;
+        return new JSONObject(responseBody);
+    }
+    
+    public JSONObject getAlbumDetails(String albumId) throws IOException, InterruptedException {
+        if (!isAuthorized()) {
+            throw new IllegalStateException("Not authorized yet!");
+        }
+        String endpoint = "/albums/" + albumId;
+        String responseBody = callSpotifyApi("GET", endpoint, null);
+        if (responseBody == null) return null;
+        return new JSONObject(responseBody);
+    }
+    
+
     private String callSpotifyApi(String method, String endpoint, String body)
             throws IOException, InterruptedException {
         if (!isAuthorized()) {
