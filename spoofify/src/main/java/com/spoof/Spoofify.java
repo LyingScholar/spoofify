@@ -17,110 +17,146 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 /**
- * A simplified JavaFX "Spoofify" player that controls Spotify via the Web API.
+ * A Spotify via the Web API.
  */
 public class Spoofify extends Application {
-
     private final SpotifyService spotifyService = new SpotifyService();
-
-    private Button loginButton;
-    private Button playButton;
-    private Button pauseButton;
-    private Button nextButton;
-    private Button prevButton;
-
-    private Label titleLabel;
-    private Label artistLabel;
+    private PlaybackBar playbackBar;  
     private ImageView albumCoverView;
 
-    private Slider volumeSlider;
+    private String currentTrackId;
+    private String currentAlbumId;
+
 
     @Override
     public void start(Stage stage) {
         stage.setTitle("Spoofify - Spotify Web API Demo");
 
-        VBox root = new VBox(15);
-        root.setPadding(new Insets(20));
-        root.setAlignment(Pos.CENTER);
+        BorderPane mainLayout = new BorderPane();
+        mainLayout.setPrefSize(900, 600);
+        mainLayout.setPadding(new Insets(20));
+        
+        
+        // Top Bar
+        HBox topBar = new HBox();
+        topBar.setPadding(new Insets(10));
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setStyle("-fx-background-color: #1DB954;"); // Typical Spotify green
+        Label logoLabel = new Label("Spoofify");
+        logoLabel.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
+        topBar.getChildren().add(logoLabel);
+        mainLayout.setTop(topBar);
 
-        // Login button
-        loginButton = new Button("Login with Spotify");
-        loginButton.setOnAction(e -> handleLogin());
-        root.getChildren().add(loginButton);
+        // // Track info + album cover
+        // titleLabel = new Label("Track title");
+        // artistLabel = new Label("Artist");
+        // albumCoverView = new ImageView();
+        // albumCoverView.setFitHeight(200);
+        // albumCoverView.setFitWidth(200);
+        // albumCoverView.setPreserveRatio(true);
 
-        // Track info + album cover
-        titleLabel = new Label("Track title");
-        artistLabel = new Label("Artist");
+        // VBox centerBox = new VBox(10, albumCoverView, titleLabel, artistLabel);
+        // centerBox.setAlignment(Pos.CENTER);
+        // root.getChildren().add(centerBox);
+
+        // // Playback controls
+        // HBox bottomBar = new HBox(10);
+        // bottomBar.setAlignment(Pos.CENTER);
+
+        // prevButton = new Button("Prev");
+        // prevButton.setOnAction(e -> handlePrevious());
+
+        // playButton = new Button("Play");
+        // playButton.setOnAction(e -> handlePlay());
+
+        // pauseButton = new Button("Pause");
+        // pauseButton.setOnAction(e -> handlePause());
+
+        // nextButton = new Button("Next");
+        // nextButton.setOnAction(e -> handleNext());
+
+        // Label volLabel = new Label("Volume");
+        // volumeSlider = new Slider(0, 100, 50);
+        // volumeSlider.valueProperty().addListener((obs, oldVal, newVal) ->
+        //     handleVolumeChange(newVal.intValue())
+        // );
+
+        // titleLabel = new Label("Title");
+        // titleLabel.setOnMouseClicked(e -> showTrackDetails());
+        // artistLabel = new Label("Artist");
+        // artistLabel.setOnMouseClicked(e -> showAlbumDetails());
+
+        // bottomBar.getChildren().addAll(prevButton, playButton, pauseButton, nextButton, volLabel, volumeSlider);
+        // root.getChildren().add(bottomBar);
+
+
+
+        // Left Sidebar
+        VBox sidebar = new VBox(15);
+        sidebar.setPadding(new Insets(20));
+        sidebar.setAlignment(Pos.TOP_LEFT);
+        sidebar.setStyle("-fx-background-color: #121212;"); // Spotify-like dark
+        Label homeLabel = new Label("Home");
+        homeLabel.setStyle("-fx-text-fill: white;");
+        Label searchLabel = new Label("Search");
+        searchLabel.setStyle("-fx-text-fill: white;");
+        Label libraryLabel = new Label("Your Library");
+        libraryLabel.setStyle("-fx-text-fill: white;");
+        sidebar.getChildren().addAll(homeLabel, searchLabel, libraryLabel);
+        mainLayout.setLeft(sidebar);
+
+
+        // Center content (just an album cover for now)
         albumCoverView = new ImageView();
-        albumCoverView.setFitHeight(200);
-        albumCoverView.setFitWidth(200);
+        albumCoverView.setFitHeight(300);
+        albumCoverView.setFitWidth(300);
         albumCoverView.setPreserveRatio(true);
 
-        VBox centerBox = new VBox(10, albumCoverView, titleLabel, artistLabel);
+        VBox centerBox = new VBox(albumCoverView);
         centerBox.setAlignment(Pos.CENTER);
-        root.getChildren().add(centerBox);
+        mainLayout.setCenter(centerBox);
 
-        // Playback controls
-        HBox bottomBar = new HBox(10);
-        bottomBar.setAlignment(Pos.CENTER);
+        // Bottom Playback Bar
+        playbackBar = new PlaybackBar();
+        // Wire up Spotify actions
+        playbackBar.getPlayButton().setOnAction(e -> handlePlay());
+        playbackBar.getPauseButton().setOnAction(e -> handlePause());
+        playbackBar.getNextButton().setOnAction(e -> handleNext());
+        playbackBar.getPrevButton().setOnAction(e -> handlePrevious());
+        playbackBar.getShuffleButton().setOnAction(e -> handleShuffle());
+        playbackBar.getRepeatButton().setOnAction(e -> handleRepeat());
+        // Volume
+        playbackBar.getVolumeSlider().valueProperty().addListener((obs, oldV, newV) -> {
+            handleVolumeChange(newV.intValue());
+        });
+        // Clickable track/artist for details
+        playbackBar.getTrackTitleLabel().setOnMouseClicked(e -> showTrackDetails());
+        playbackBar.getArtistLabel().setOnMouseClicked(e -> showAlbumDetails());
+        mainLayout.setBottom(playbackBar);
 
-        prevButton = new Button("Prev");
-        prevButton.setOnAction(e -> handlePrevious());
-
-        playButton = new Button("Play");
-        playButton.setOnAction(e -> handlePlay());
-
-        pauseButton = new Button("Pause");
-        pauseButton.setOnAction(e -> handlePause());
-
-        nextButton = new Button("Next");
-        nextButton.setOnAction(e -> handleNext());
-
-        Label volLabel = new Label("Volume");
-        volumeSlider = new Slider(0, 100, 50);
-        volumeSlider.valueProperty().addListener((obs, oldVal, newVal) ->
-            handleVolumeChange(newVal.intValue())
-        );
-
-        titleLabel = new Label("Title");
-        titleLabel.setOnMouseClicked(e -> showTrackDetails());
-        artistLabel = new Label("Artist");
-        artistLabel.setOnMouseClicked(e -> showAlbumDetails());
-
-        bottomBar.getChildren().addAll(prevButton, playButton, pauseButton, nextButton, volLabel, volumeSlider);
-        root.getChildren().add(bottomBar);
-
-        Scene scene = new Scene(root, 600, 450);
+        Scene scene = new Scene(mainLayout);
         stage.setScene(scene);
         stage.show();
 
         startPlaybackPolling();
     }
 
-    private void handleLogin() {
-        try {
-            spotifyService.authenticate();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            showAlert("Error", "Failed to start Spotify login: " + ex.getMessage());
-        }
-    }
 
     private void handlePlay() {
         if (!spotifyService.isAuthorized()) {
-            showAlert("Not Logged In", "Please log in first.");
+            showAlert("Not Logged In", "Please log in first (in your OAuth flow).");
             return;
         }
         try {
             spotifyService.play();
         } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("Playback Error", "Failed to play: " + e.getMessage());
+            showAlert("Playback Error", e.getMessage());
         }
     }
 
@@ -132,8 +168,7 @@ public class Spoofify extends Application {
         try {
             spotifyService.pause();
         } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("Playback Error", "Failed to pause: " + e.getMessage());
+            showAlert("Playback Error", e.getMessage());
         }
     }
 
@@ -145,8 +180,7 @@ public class Spoofify extends Application {
         try {
             spotifyService.nextTrack();
         } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("Playback Error", "Failed to skip: " + e.getMessage());
+            showAlert("Playback Error", e.getMessage());
         }
     }
 
@@ -158,8 +192,7 @@ public class Spoofify extends Application {
         try {
             spotifyService.previousTrack();
         } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("Playback Error", "Failed to go previous: " + e.getMessage());
+            showAlert("Playback Error", e.getMessage());
         }
     }
 
@@ -174,9 +207,13 @@ public class Spoofify extends Application {
         }
     }
 
-    private String currentTrackId;
-    private String currentAlbumId;
+    private void handleShuffle() {
+        // stub, call spotifyService to toggle shuffle
+    }
 
+    private void handleRepeat() {
+        // stub, call spotifyService to toggle repeat
+    }
     private void startPlaybackPolling() {
         Timer timer = new Timer(true);
         TimerTask fetchTask = new TimerTask() {
