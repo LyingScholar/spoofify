@@ -6,7 +6,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   
-  <groupId>com.spoofify</groupId>
+  <groupId>com.spoof</groupId>
   <artifactId>spoofify</artifactId>
   <version>1.5</version>
 
@@ -68,7 +68,7 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
-          <mainClass>com.spoofify.Spoofify</mainClass>
+          <mainClass>com.spoof.Spoofify</mainClass>
           <arguments>
             <!-- If you have a local JavaFX SDK unzipped -->
             <argument>--module-path</argument>

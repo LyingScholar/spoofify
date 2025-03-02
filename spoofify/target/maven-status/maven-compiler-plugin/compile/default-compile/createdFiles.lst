@@ -1,3 +1,5 @@
-com\spoofify\App.class
-com\spoofify\Spoofify.class
-com\spoofify\Song.class
+com\spoof\SpotifyService.class
+com\spoof\Spoofify.class
+com\spoof\App.class
+com\spoof\Spoofify$1.class
+com\spoof\Song.class

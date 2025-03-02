@@ -9,8 +9,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import com.sun.net.httpserver.HttpServer;
+
 import org.json.JSONObject;
+
+import com.sun.net.httpserver.HttpServer;
 
 /**
  * Handles Spotify OAuth and basic Web API calls.
@@ -57,7 +59,7 @@ public class SpotifyService {
             }
             
             if (query != null && query.contains("code=")) {
-                String code = query.split("code=")[1];
+                String code = query.split("code=")[1];  
                 // If there's also a state or other query params,
                 if (code.contains("&")) {
                     code = code.split("&")[0];

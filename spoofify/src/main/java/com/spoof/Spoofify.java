@@ -1,20 +1,25 @@
 package com.spoof;
 
+import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import org.json.JSONObject;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * A simplified JavaFX "Spoofify" player that controls Spotify via the Web API.
@@ -184,11 +189,14 @@ public class Spoofify extends Application {
                                 imageUrl = album.getJSONArray("images").getJSONObject(0).getString("url");
                             }
 
+                            final boolean x = Boolean.TRUE.equals(imageUrl != null);
+                            final Image y = new Image(imageUrl);
+
                             Platform.runLater(() -> {
                                 titleLabel.setText(trackName);
                                 artistLabel.setText(artistName);
-                                if (imageUrl != null) {
-                                    albumCoverView.setImage(new Image(imageUrl));
+                                if (x) {
+                                    albumCoverView.setImage(y);
                                 }
                             });
                         }
