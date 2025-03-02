@@ -73,8 +73,8 @@
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
         <configuration>
-          <!-- Set this to your actual main class, e.g. SpoofifyFullScreen -->
-          <mainClass>com.spoof.SpoofifyFullScreen</mainClass>
+          <!-- Set this to your actual main class, e.g. Spoofify -->
+          <mainClass>com.spoof.Spoofify</mainClass>
           <arguments>
             <!-- Point to your JavaFX SDK's /lib folder -->
             <argument>--module-path</argument>
