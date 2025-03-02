@@ -1,5 +1,6 @@
 package com.spoof;
 
+import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -138,11 +139,21 @@ public class Spoofify extends Application {
         mainLayout.setBottom(playbackBar);
 
         Scene scene = new Scene(mainLayout);
+        handleLogin();
         stage.setScene(scene);
         stage.show();
 
         startPlaybackPolling();
     }
+
+    private void handleLogin() {
+            try {
+                spotifyService.authenticate();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                showAlert("Error", "Failed to start Spotify login: " + ex.getMessage());
+            }
+        }
 
 
     private void handlePlay() {

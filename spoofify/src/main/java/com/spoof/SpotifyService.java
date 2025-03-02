@@ -32,7 +32,27 @@ public class SpotifyService {
 
 
 
-
+    public static void closeBrowserWindow() {
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            if (os.contains("win")) {
+                // Windows: Send Ctrl+W via PowerShell
+                new ProcessBuilder("powershell", "-command",
+                    "$wshell = New-Object -ComObject wscript.shell; " + "$wshell.AppActivate(\"localhost\");" +
+                    "$wshell.SendKeys('')").start();
+            } else if (os.contains("mac")) {
+                // fuck u mac users
+                // macOS: Send Command+W via AppleScript
+                // new ProcessBuilder("osascript", "-e",
+                //     "tell application \"System Events\" to keystroke \"w\" using command down").start();
+            } else if (os.contains("nix") || os.contains("nux")) {
+                // Linux: Use xdotool to send Ctrl+W
+                new ProcessBuilder("xdotool", "key", "ctrl+w").start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public void authenticate() throws IOException {
         // 1) Start a local server to handle the callback
         startLocalCallbackServer();
@@ -46,6 +66,15 @@ public class SpotifyService {
 
         System.out.println("Opening browser for Spotify login...");
         java.awt.Desktop.getDesktop().browse(URI.create(authorizeUrl));
+        // try {
+        //     TimeUnit.MILLISECONDS.sleep(5);
+        // } catch (InterruptedException e) {
+        //     // TODO Auto-generated catch block
+        //     e.printStackTrace();
+        // } // Wait 50ms
+        closeBrowserWindow(); // Close the browser
+
+
     }
 
     private void startLocalCallbackServer() throws IOException {
@@ -76,6 +105,8 @@ public class SpotifyService {
         });
         server.start();
     }
+
+
 
     /**
      * Exchange authorization code for an access token
@@ -156,7 +187,7 @@ public class SpotifyService {
         return new JSONObject(response);
     }
 
-    
+
     public JSONObject getTrackDetails(String trackId) throws IOException, InterruptedException {
         if (!isAuthorized()) {
             throw new IllegalStateException("Not authorized yet!");
