@@ -1,4 +1,4 @@
-package com.gui;
+package com.spoofify;
 
 /**
  * Hello world!

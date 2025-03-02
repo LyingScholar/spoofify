@@ -1,4 +1,3 @@
-// package com.gui;
 
 
 // import java.io.File;
@@ -298,10 +297,11 @@
 
 
 //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-package com.gui;
-
+package com.spoofify;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 
 import javafx.application.Application;
 import javafx.geometry.Pos;
@@ -321,52 +321,43 @@ import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.stage.Stage;
-import javafx.util.Duration; 
+import javafx.util.Duration;
 
 /**
- * "Spotify-like" music player using JavaFX basics.
+ * "Spoofify" music player using JavaFX basics, adapted to use the Song class.
  */
-public class Spooofify extends Application {
+public class Spoofify extends Application {
 
     // -- Day/Night mode colors --
-    //Maybe add more colors for themes
-    // ---------------------------
-
-    private static final String DAY_BACKGROUND = "-fx-background-color: white;";
-    private static final String DAY_TEXT_COLOR = "-fx-text-fill: black;";
+    private static final String DAY_BACKGROUND  = "-fx-background-color: white;";
+    private static final String DAY_TEXT_COLOR  = "-fx-text-fill: black;";
     private static final String NIGHT_BACKGROUND = "-fx-background-color: #333333;";
     private static final String NIGHT_TEXT_COLOR = "-fx-text-fill: white;";
 
-    // Array of songs (file paths) -- be sure these exist on your machine!
-    private final String[] songFiles = {
-        "src/main/java/com/gui/media/music/FEN.mp3",
-        "src/main/java/com/gui/media/music/Doom.mp3",
-        "src/main/java/com/gui/media/music/Oops.mp3"
-    };
-
-    // Parallel arrays for song info (could also make a small Song class)
-    private final String[] songTitles = { 
-        "FE!N", 
-        "The Only Thing They Fear Is You", 
-        "Oops!!!" 
-    };
-    private final String[] artistNames = { 
-        "Travis Scott ft Playboi Carti", 
-        "Mick Gordon", 
-        "Yung Gravy"
-    };
-    
-    private final String[] albumName = {
-        "UTOPIA",
-        "Doom Eternal OST",
-        "Oops!!!"
-    };
-
-    private final String[] albumCovers = {
-        "src/main/java/com/gui/media/images/cover1.png",
-        "src/main/java/com/gui/media/images/cover2.png",
-        "src/main/java/com/gui/media/images/cover3.png"
-    };
+    // List of songs using the Song class
+    private final List<Song> songs = Arrays.asList(
+        new Song(
+            "src/main/java/com/gui/media/music/FEN.mp3",
+            "FE!N",
+            "Travis Scott ft Playboi Carti",
+            "UTOPIA",
+            "src/main/java/com/gui/media/images/cover1.png"
+        ),
+        new Song(
+            "src/main/java/com/gui/media/music/Doom.mp3",
+            "The Only Thing They Fear Is You",
+            "Mick Gordon",
+            "Doom Eternal OST",
+            "src/main/java/com/gui/media/images/cover2.png"
+        ),
+        new Song(
+            "src/main/java/com/gui/media/music/Oops.mp3",
+            "Oops!!!",
+            "Yung Gravy",
+            "Oops!!!",
+            "src/main/java/com/gui/media/images/cover3.png"
+        )
+    );
 
     // Keep track of which song is currently playing
     private int currentIndex = 0;
@@ -380,84 +371,66 @@ public class Spooofify extends Application {
     private Label albumLabel;
     private Label progressLabel;
     private ImageView albumArtView;
-
     private ToggleButton dayNightToggle;
-
-    private ImageView blurredBackgroundView; 
+    private ImageView blurredBackgroundView;
     private ProgressBar playbackBar;
-
     private Slider volumeSlider;
-
 
     @Override
     public void start(Stage stage) {
-        stage.setTitle("Spotify-Like Player");
+        stage.setTitle("Spoofify Player");
 
-         StackPane rootStack = new StackPane();
-        
-        //Blurred background
+        StackPane rootStack = new StackPane();
+
+        // Blurred background
         blurredBackgroundView = new ImageView();
         blurredBackgroundView.setFitWidth(800);  // Big enough to cover window
         blurredBackgroundView.setPreserveRatio(true);
-        
-        GaussianBlur blur = new GaussianBlur(20.0); // increase radius for stronger blurr
+        GaussianBlur blur = new GaussianBlur(20.0);
         blurredBackgroundView.setEffect(blur);
         rootStack.getChildren().add(blurredBackgroundView);
+
+        // Main UI layout in a BorderPane
         BorderPane mainUI = new BorderPane();
         rootStack.getChildren().add(mainUI);
 
-        // Day/Night Toggle
-        // ---------------------------
-
+        // Top Bar: Day/Night Toggle
         HBox topBar = new HBox();
         topBar.setStyle("-fx-background-color: transparent;");
-        
         topBar.setAlignment(Pos.CENTER_RIGHT);
+
         dayNightToggle = new ToggleButton("Night Mode");
         dayNightToggle.setOnAction(e -> toggleDayNightMode());
         topBar.getChildren().add(dayNightToggle);
+        mainUI.setTop(topBar);
 
-        
-        // Album Art, Song Title, Artist
-        // ---------------------------
-        
+        // Center: Album Art, Song Title, Artist, Album
         VBox centerBox = new VBox();
         centerBox.setSpacing(10);
-        topBar.setAlignment(Pos.CENTER);
-        centerBox.setStyle("-fx-background-color: rgba(255, 255, 255, 0.3);"); 
-        centerBox.setFillWidth(false);  
-
+        centerBox.setAlignment(Pos.CENTER);
+        centerBox.setStyle("-fx-background-color: rgba(255, 255, 255, 0.3);");
 
         albumArtView = new ImageView();
         albumArtView.setFitWidth(200);
         albumArtView.setFitHeight(200);
         albumArtView.setPreserveRatio(true);
+
         titleLabel = new Label("Song Title");
         artistLabel = new Label("Artist Name");
         albumLabel = new Label("Album Name");
-        
-        String TitleStyle  = "-fx-font-family: 'Poppins'; -fx-font-size: 30px; -fx-font-weight: bold;";
-        String ArtistStyle = "-fx-font-family: 'Poppins'; -fx-font-size: 22px;";
-        String AlbumStyle  = "-fx-font-family: 'Poppins'; -fx-font-size: 18px;";
 
-        titleLabel.setStyle(DAY_TEXT_COLOR + TitleStyle);
-        artistLabel.setStyle(DAY_TEXT_COLOR + ArtistStyle);
-        albumLabel.setStyle(DAY_TEXT_COLOR + AlbumStyle);
+        String titleStyle  = "-fx-font-family: 'Poppins'; -fx-font-size: 30px; -fx-font-weight: bold;";
+        String artistStyle = "-fx-font-family: 'Poppins'; -fx-font-size: 22px;";
+        String albumStyle  = "-fx-font-family: 'Poppins'; -fx-font-size: 18px;";
 
-
+        titleLabel.setStyle(DAY_TEXT_COLOR + titleStyle);
+        artistLabel.setStyle(DAY_TEXT_COLOR + artistStyle);
+        albumLabel.setStyle(DAY_TEXT_COLOR + albumStyle);
 
         centerBox.getChildren().addAll(albumArtView, titleLabel, artistLabel, albumLabel);
         mainUI.setCenter(centerBox);
 
-
-        // Make the center box stretch:
-        // VBox.setVgrow(albumArtView, Priority.ALWAYS);//----------------------------------------------------------
-
-
-
-        
-        // Playback Controls + Progress
-        // ---------------------------
+        // Bottom Bar: Playback Controls, Progress, Volume
         HBox bottomBar = new HBox();
         bottomBar.setSpacing(10);
         bottomBar.setStyle("-fx-background-color: transparent;");
@@ -468,38 +441,34 @@ public class Spooofify extends Application {
         Button pauseButton = new Button("Pause");
         Button nextButton = new Button("Next");
 
-        //Progess label to be removed or moved to either side of the playback bar 
         progressLabel = new Label("0:00 / 0:00");
         progressLabel.setStyle(DAY_TEXT_COLOR + "-fx-font-family: 'Poppins'; -fx-font-size: 12px;");
 
         volumeSlider = new Slider(0.0, 1.0, 0.5); // range 0–1, default 0.5
         volumeSlider.setPrefWidth(100);
 
-        
-
-
         playbackBar = new ProgressBar(0.0);
         playbackBar.setPrefWidth(150);
-        playbackBar.setStyle("-fx-accent: #ff0000;"); 
-        // “-fx-accent” sets the fill color of a ProgressBar in JavaFX (by default)
-        
-        // Networking all the buttons to the backend
+        playbackBar.setStyle("-fx-accent: #ff0000;");
+
+        // Button Events
         prevButton.setOnAction(e -> handlePrevious());
         playButton.setOnAction(e -> handlePlay());
         pauseButton.setOnAction(e -> handlePause());
         nextButton.setOnAction(e -> handleNext());
 
-        bottomBar.getChildren().addAll(prevButton, playButton, pauseButton, nextButton, playbackBar, progressLabel,new Label("Volume:"), volumeSlider);
+        bottomBar.getChildren().addAll(
+            prevButton, playButton, pauseButton, nextButton,
+            playbackBar, progressLabel,
+            new Label("Volume:"), volumeSlider
+        );
         mainUI.setBottom(bottomBar);
 
-        // Setup the Scene
-        // ---------------------------
-
-        Scene scene = new Scene(rootStack, 600, 500); // bigger to see background
+        Scene scene = new Scene(rootStack, 600, 500);
         stage.setScene(scene);
         stage.show();
 
-        // Finally, load the first track
+        // Load the first track
         loadTrack(currentIndex);
     }
 
@@ -507,51 +476,53 @@ public class Spooofify extends Application {
      * Load a specific track by index, create media player, and update the UI.
      */
     private void loadTrack(int index) {
+        // Dispose old player if needed
         if (mediaPlayer != null) {
             mediaPlayer.stop();
+            mediaPlayer.dispose();
         }
 
         // Ensure valid index
-        currentIndex = (index + songFiles.length) % songFiles.length;
+        currentIndex = (index + songs.size()) % songs.size();
+        Song currentSong = songs.get(currentIndex);
 
-        File mp3File = new File(songFiles[currentIndex]);
+        File mp3File = new File(currentSong.getFilePath());
         Media media = new Media(mp3File.toURI().toString());
         mediaPlayer = new MediaPlayer(media);
 
-        // Update album art, song title, artist, album title
-        titleLabel.setText(songTitles[currentIndex]);
-        artistLabel.setText(artistNames[currentIndex]);
-        albumLabel.setText(albumName[currentIndex]);
-        Image cover = new Image("file:" + albumCovers[currentIndex]);
-        albumArtView.setImage(cover);
+        // Update UI with the new Song
+        titleLabel.setText(currentSong.getTitle());
+        artistLabel.setText(currentSong.getArtist());
+        albumLabel.setText(currentSong.getAlbum());
 
+        Image cover = new Image("file:" + currentSong.getCoverPath());
+        albumArtView.setImage(cover);
         blurredBackgroundView.setImage(cover);
 
         // Reset progress
         playbackBar.setProgress(0.0);
         progressLabel.setText("0:00 / 0:00");
         playbackBar.setStyle(
-        "-fx-accent: red;" +
-        "-fx-control-inner-background: #cccccc;" + // background of the bar when empty
-        "-fx-background-color: #999999;"           // outer border area
+            "-fx-accent: red;" +
+            "-fx-control-inner-background: #cccccc;" + // background of the bar when empty
+            "-fx-background-color: #999999;"           // outer border area
         );
 
-
-        // Get duration
+        // Media is ready
         mediaPlayer.setOnReady(() -> {
             Duration total = mediaPlayer.getMedia().getDuration();
             String totalStr = formatTime(total);
             progressLabel.setText("0:00 / " + totalStr);
         });
 
-        // Keep track of currentTime to update progress
+        // Update playback progress
         mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
             Duration total = mediaPlayer.getTotalDuration();
             if (total != null && !total.isUnknown()) {
                 double current   = newTime.toSeconds();
                 double totalSecs = total.toSeconds();
                 double frac      = (totalSecs > 0) ? (current / totalSecs) : 0.0;
-                playbackBar.setProgress(frac); // 0.0 -> 1.0
+                playbackBar.setProgress(frac);
 
                 String currentStr = formatTime(newTime);
                 String totalStr   = formatTime(total);
@@ -559,7 +530,7 @@ public class Spooofify extends Application {
             }
         });
 
-        //volume slider
+        // Keep volume in sync with the slider
         volumeSlider.valueProperty().addListener((ov, oldVal, newVal) -> {
             if (mediaPlayer != null) {
                 mediaPlayer.setVolume(newVal.doubleValue());
@@ -568,7 +539,7 @@ public class Spooofify extends Application {
     }
 
     /**
-     * Code to format a Duration as M:SS (e.g., 3:05).
+     * Format a Duration as M:SS (e.g., 3:05).
      */
     private String formatTime(Duration duration) {
         if (duration == null || duration.isUnknown()) {
@@ -577,15 +548,11 @@ public class Spooofify extends Application {
         int seconds = (int) duration.toSeconds();
         int minutes = seconds / 60;
         int secs = seconds % 60;
-
         return String.format("%d:%02d", minutes, secs);
     }
 
-    // -------------------------------
-    // Event Handlers for Buttons
-    // -------------------------------
+    // -- Button Handlers --
     private void handlePrevious() {
-        // Decrement index and reload track
         loadTrack(currentIndex - 1);
         mediaPlayer.play();
     }
@@ -603,19 +570,14 @@ public class Spooofify extends Application {
     }
 
     private void handleNext() {
-        // Increment index and reload track
         loadTrack(currentIndex + 1);
         mediaPlayer.play();
     }
-
-
 
     /**
      * Toggle between Day and Night mode by updating the style.
      */
     private void toggleDayNightMode() {
-
-        
         boolean nightMode = dayNightToggle.isSelected();
         if (nightMode) {
             dayNightToggle.setText("Day Mode");
@@ -630,8 +592,6 @@ public class Spooofify extends Application {
      * Updates the background/text color for the entire UI.
      */
     private void setOverallTheme(String backgroundStyle, String textStyle) {
-        
-        
         StackPane rootStack = (StackPane) dayNightToggle.getScene().getRoot();
         BorderPane mainUI = (BorderPane) rootStack.getChildren().get(1);
 
@@ -649,12 +609,11 @@ public class Spooofify extends Application {
 
         // Bottom
         HBox bottomBar = (HBox) mainUI.getBottom();
-        // In toggleDayNightMode or setOverallTheme, apply something like:
-        bottomBar.setStyle("-fx-background-color: white;"); // if you want to keep white
+        bottomBar.setStyle("-fx-background-color: white;");
         playbackBar.setStyle(
-            "-fx-accent: #0073e6;"       +  // progress fill color
-            "-fx-control-inner-background: #e0e0e0;" +  // bar background color
-            "-fx-background-color: #999;"             // outer border area
+            "-fx-accent: #0073e6;" +
+            "-fx-control-inner-background: #e0e0e0;" +
+            "-fx-background-color: #999;"
         );
         volumeSlider.setStyle("-fx-control-inner-background: #e0e0e0;");
 
@@ -666,8 +625,16 @@ public class Spooofify extends Application {
         }
     }
 
-    // Main
-    // ---------------------------
+    @Override
+    public void stop() {
+        // Safely dispose of the media player when exiting
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            mediaPlayer.dispose();
+        }
+    }
+
+    // Main entry point
     public static void main(String[] args) {
         launch(args);
     }
